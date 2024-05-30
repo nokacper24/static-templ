@@ -33,7 +33,7 @@ func FindDirsWithGoFiles(root string) ([]string, error) {
 		if err != nil {
 			return err
 		}
-		if !d.IsDir() && filepath.Ext(path) == ".go" {
+		if !d.IsDir() && path[len(path)-9:] == "_templ.go" {
 			dirPath := filepath.Dir(path)
 			goFilePaths[dirPath] = true
 		}
