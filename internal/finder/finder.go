@@ -72,7 +72,7 @@ func FindFuncsToCall(dirs []string) ([]FileToGenerate, error) {
 								FileToGenerate{
 									packageName,
 									functionName.Name,
-									fmt.Sprintf(path,"/"),
+									fmt.Sprintf("%s/", path),
 								})
 						}
 					}
@@ -107,5 +107,5 @@ func (f *FileToGenerate) Location(root string) string {
 
 func (f *FileToGenerate) ToGenerate(root string, prefix string) string {
 	noRoot := f.path[len(root):]
-	return fmt.Sprintf("%s%s/%s", prefix, noRoot, f.HtmlFileName())
+	return fmt.Sprintf("%s%s%s", prefix, noRoot, f.HtmlFileName())
 }

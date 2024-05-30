@@ -40,8 +40,8 @@ func main() {
 		// log.Println(f.FuncSign())
 		// log.Println(f.HtmlFileName())
 		importsMap[f.Location("")] = true
-		log.Printf("'%s'", f.Location(""))
-		log.Println(f.ToGenerate(inputPath, dirPath))
+		fmt.Println(f.Location(""))
+		fmt.Println(f.ToGenerate(inputPath, dirPath))
 	}
 	var importsSlice []string
 	for imp := range importsMap {
