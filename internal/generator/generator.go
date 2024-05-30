@@ -12,7 +12,9 @@ package main
 
 import (
 	"context"
+	"io"
 	"os"
+	"path/filepath"
 	"log"
 	{{- range .Imports }}
 	"{{ . }}"
@@ -20,30 +22,35 @@ import (
 )
 
 func main() {
+	fileFuncs := []fileAndFunc{
+	{{- range .FilesToGenerate }}
+		{
+			{{ .PackageName }}.{{ .FuncToCall }}().Render,
+			"{{.FilePath}}",
+		},
+	{{- end }}
+	}
 
 	ctx := context.Background()
 
-	{{- range .FilesToGenerate }}
-	{{ .PackageName }}{{ .FunctionName }}Path := {{.FilePath}}
-
-
-
-
-	{{- end }}
-
-	p := "dist/test/file.html"
-
-	if err := os.MkdirAll(filepath.Dir(p), os.ModePerm); err != nil {
-		log.Fatal("error creating dirs:", err)
+	for _, ff := range fileFuncs {
+		if err := os.MkdirAll(filepath.Dir(ff.path), os.ModePerm); err != nil {
+			log.Fatal("error creating dirs:", err)
+		}
+	
+		file, err := os.Create(ff.path)
+		if err != nil {
+			log.Fatal("error creating file:", err)
+		}
+		defer file.Close()
+		ff.function(ctx,file)
 	}
 
-	f, err := os.Create(p)
-	if err != nil {
-		log.Fatal("error creating file:", err)
-	}
+}
 
-	pages.Index().Render(ctx,f)
-
+type fileAndFunc struct {
+	function func(ctx context.Context, w io.Writer) error
+	path string
 }
 `
 
@@ -54,8 +61,9 @@ type InputData struct {
 }
 
 type StringedData struct {
-	FuncToCall string
-	FilePath   string
+	FuncToCall  string
+	FilePath    string
+	PackageName string
 }
 
 func Generate(imports []string, funcs []finder.FileToGenerate) error {
@@ -64,11 +72,17 @@ func Generate(imports []string, funcs []finder.FileToGenerate) error {
 		stringed = append(stringed, StringedData{
 			f.FunctionName,
 			f.ToGenerate("web/pages/", "dist/"),
+			f.PackageName,
 		})
 	}
 
+	var importsNoSlash []string
+	for _, imp := range imports {
+		importsNoSlash = append(importsNoSlash, imp[:len(imp)-1])
+	}
+
 	data := InputData{
-		Imports:         imports,
+		Imports:         importsNoSlash,
 		FilesToGenerate: stringed,
 	}
 
