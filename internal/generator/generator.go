@@ -66,7 +66,7 @@ type StringedData struct {
 	PackageName string
 }
 
-func Generate(imports []string, funcs []finder.FileToGenerate) error {
+func Generate(outputPath string, imports []string, funcs []finder.FileToGenerate) error {
 	var stringed []StringedData
 	for _, f := range funcs {
 		stringed = append(stringed, StringedData{
@@ -91,7 +91,7 @@ func Generate(imports []string, funcs []finder.FileToGenerate) error {
 		return err
 	}
 
-	f, err := os.Create("cmd/output.go")
+	f, err := os.Create(outputPath)
 	if err != nil {
 		return err
 	}

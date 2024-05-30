@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 
 	"github.com/nokacper24/templ-static-generator/internal/finder"
 	"github.com/nokacper24/templ-static-generator/internal/generator"
@@ -12,6 +13,7 @@ import (
 func main() {
 	dirPath := "dist/"
 	inputPath := "web/pages/"
+	outputScriptPath := "templ_static_generate_script.go"
 
 	err := os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {
@@ -47,8 +49,23 @@ func main() {
 		log.Fatal("err removing files", err)
 	}
 
-	err = generator.Generate(importsSlice, funcs)
+	err = generator.Generate(outputScriptPath, importsSlice, funcs)
 	if err != nil {
 		log.Fatal("err generating script", err)
+	}
+
+	cmd := exec.Command("go", "run", outputScriptPath)
+	err = cmd.Start()
+	if err != nil {
+		log.Fatal("err starting script", err)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		log.Fatal("err running script", err)
+	}
+
+	err = os.Remove(outputScriptPath)
+	if err != nil {
+		log.Fatal("err removing enerated script file", err)
 	}
 }
