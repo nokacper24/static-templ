@@ -10,8 +10,8 @@ import (
 )
 
 func main() {
-	dirPath := "dist"
-	inputPath := "web/pages"
+	dirPath := "dist/"
+	inputPath := "web/pages/"
 
 	err := os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {

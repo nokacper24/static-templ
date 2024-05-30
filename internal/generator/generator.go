@@ -63,7 +63,7 @@ func Generate(imports []string, funcs []finder.FileToGenerate) error {
 	for _, f := range funcs {
 		stringed = append(stringed, StringedData{
 			f.FunctionName,
-			f.ToGenerate("web/pages/", "dist"),
+			f.ToGenerate("web/pages/", "dist/"),
 		})
 	}
 

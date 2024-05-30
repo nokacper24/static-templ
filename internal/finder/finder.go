@@ -72,7 +72,7 @@ func FindFuncsToCall(dirs []string) ([]FileToGenerate, error) {
 								FileToGenerate{
 									packageName,
 									functionName.Name,
-									path,
+									fmt.Sprintf(path,"/"),
 								})
 						}
 					}
