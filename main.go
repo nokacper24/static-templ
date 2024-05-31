@@ -10,12 +10,16 @@ import (
 	"github.com/nokacper24/templ-static-generator/internal/generator"
 )
 
-func main() {
-	dirPath := "dist/"
-	inputPath := "web/pages/"
-	outputScriptPath := "templ_static_generate_script.go"
+const (
+	outputScriptDirPath  string = "temp/"
+	outputScriptFileName string = "templ_static_generate_script.go"
+)
 
-	err := os.MkdirAll(dirPath, os.ModePerm)
+func main() {
+	outputDir := "dist/"
+	inputDir := "web/pages/"
+
+	err := os.MkdirAll(outputDir, os.ModePerm)
 	if err != nil {
 		log.Fatal("err creating dirs:", err)
 	}
@@ -25,7 +29,7 @@ func main() {
 		log.Fatal("Error finding module name:", err)
 	}
 
-	dirs, err := finder.FindDirsWithGoFiles(inputPath)
+	dirs, err := finder.FindDirsWithGoFiles(inputDir)
 	if err != nil {
 		log.Fatal("Error finding go dirs:", err)
 	}
@@ -44,17 +48,22 @@ func main() {
 		importsSlice = append(importsSlice, fmt.Sprintf("%s/%s", modName, imp))
 	}
 
-	err = os.RemoveAll(dirPath)
+	err = os.RemoveAll(outputDir)
 	if err != nil {
 		log.Fatal("err removing files", err)
 	}
 
-	err = generator.Generate(outputScriptPath, importsSlice, funcs)
+	err = os.MkdirAll(outputScriptDirPath, os.ModePerm)
+	if err != nil {
+		log.Fatal("err creating temp dir:", err)
+	}
+
+	err = generator.Generate(getOutputScriptPath(), importsSlice, funcs)
 	if err != nil {
 		log.Fatal("err generating script", err)
 	}
 
-	cmd := exec.Command("go", "run", outputScriptPath)
+	cmd := exec.Command("go", "run", getOutputScriptPath())
 	err = cmd.Start()
 	if err != nil {
 		log.Fatal("err starting script", err)
@@ -64,8 +73,12 @@ func main() {
 		log.Fatal("err running script", err)
 	}
 
-	err = os.Remove(outputScriptPath)
+	err = os.Remove(getOutputScriptPath())
 	if err != nil {
 		log.Fatal("err removing enerated script file", err)
 	}
+}
+
+func getOutputScriptPath() string {
+	return fmt.Sprintf("%s%s", outputScriptDirPath, outputScriptFileName)
 }

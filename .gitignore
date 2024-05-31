@@ -1,3 +1,5 @@
 *_templ.go
 
 web/
+dist/
+temp/
