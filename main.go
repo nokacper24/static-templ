@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/nokacper24/templ-static-generator/internal/finder"
-	"github.com/nokacper24/templ-static-generator/internal/generator"
+	"github.com/nokacper24/static-templ/internal/finder"
+	"github.com/nokacper24/static-templ/internal/generator"
 )
 
 const (

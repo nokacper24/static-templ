@@ -1,4 +1,4 @@
-module github.com/nokacper24/templ-static-generator
+module github.com/nokacper24/static-templ
 
 go 1.22.0
 
