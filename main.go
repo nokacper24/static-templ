@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	outputScriptDirPath  string = "temp/"
+	outputScriptDirPath  string = "temp"
 	outputScriptFileName string = "templ_static_generate_script.go"
 )
 
 func main() {
-	outputDir := "dist/"
-	inputDir := "web/pages/"
+	outputDir := "dist"
+	inputDir := "web/pages"
 
 	err := os.MkdirAll(outputDir, os.ModePerm)
 	if err != nil {
@@ -29,19 +29,21 @@ func main() {
 		log.Fatal("Error finding module name:", err)
 	}
 
-	dirs, err := finder.FindDirsWithGoFiles(inputDir)
+	allFiles, err := finder.FindAllFiles(inputDir)
 	if err != nil {
 		log.Fatal("Error finding go dirs:", err)
 	}
 
-	funcs, err := finder.FindFuncsToCall(dirs)
+	groupedFiles := allFiles.ToGroupedFiles()
+
+	funcs, err := finder.FindFuncsToCall(groupedFiles.TemplGoFiles)
 	if err != nil {
 		log.Fatal("Error finding funcs:", err)
 	}
 
 	importsMap := map[string]bool{}
 	for _, f := range funcs {
-		importsMap[f.Location("")] = true
+		importsMap[f.DirPath()] = true
 	}
 	var importsSlice []string
 	for imp := range importsMap {
@@ -80,5 +82,5 @@ func main() {
 }
 
 func getOutputScriptPath() string {
-	return fmt.Sprintf("%s%s", outputScriptDirPath, outputScriptFileName)
+	return fmt.Sprintf("%s/%s", outputScriptDirPath, outputScriptFileName)
 }

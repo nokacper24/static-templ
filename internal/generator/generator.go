@@ -55,8 +55,7 @@ type fileAndFunc struct {
 `
 
 type InputData struct {
-	Imports []string
-	// FilesToGenerate []finder.FileToGenerate
+	Imports         []string
 	FilesToGenerate []StringedData
 }
 
@@ -71,18 +70,13 @@ func Generate(outputPath string, imports []string, funcs []finder.FileToGenerate
 	for _, f := range funcs {
 		stringed = append(stringed, StringedData{
 			f.FunctionName,
-			f.ToGenerate("web/pages/", "dist/"),
+			f.ToGenerate("web/pages", "dist"),
 			f.PackageName,
 		})
 	}
 
-	var importsNoSlash []string
-	for _, imp := range imports {
-		importsNoSlash = append(importsNoSlash, imp[:len(imp)-1])
-	}
-
 	data := InputData{
-		Imports:         importsNoSlash,
+		Imports:         imports,
 		FilesToGenerate: stringed,
 	}
 

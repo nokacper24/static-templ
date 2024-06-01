@@ -27,15 +27,17 @@ func FindModulePath() (string, error) {
 	return mf.Module.Mod.Path, nil
 }
 
-func FindDirsWithGoFiles(root string) ([]string, error) {
-	goFilePaths := map[string]bool{}
+type filePaths []string
+
+func FindAllFiles(root string) (filePaths, error) {
+	var paths filePaths
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if !d.IsDir() && path[len(path)-9:] == "_templ.go" {
-			dirPath := filepath.Dir(path)
-			goFilePaths[dirPath] = true
+		if !d.IsDir() {
+			paths = append(paths, path)
+
 		}
 		return nil
 	})
@@ -43,43 +45,34 @@ func FindDirsWithGoFiles(root string) ([]string, error) {
 		return nil, err
 	}
 
-	var dirs []string
-	for k := range goFilePaths {
-		dirs = append(dirs, k)
-	}
-	return dirs, nil
+	return paths, nil
 }
 
-func FindFuncsToCall(dirs []string) ([]FileToGenerate, error) {
+func FindFuncsToCall(files filePaths) ([]FileToGenerate, error) {
 	var funcs []FileToGenerate
 
-	for _, path := range dirs {
-		packages, err := parser.ParseDir(token.NewFileSet(), path, nil, parser.AllErrors)
+	for _, path := range files {
+		astFile, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.AllErrors)
 		if err != nil {
 			return nil, err
 		}
-		for packageName, v := range packages {
-			for _, file := range v.Files {
-				for _, d := range file.Decls {
-					if fn, isFn := d.(*ast.FuncDecl); isFn {
-
-						isExported := ast.IsExported(fn.Name.Name)
-						hasParams := len(fn.Type.Params.List) != 0
-						if isExported && !hasParams {
-							functionName := fn.Name
-							funcs = append(
-								funcs,
-								FileToGenerate{
-									packageName,
-									functionName.Name,
-									fmt.Sprintf("%s/", path),
-								})
-						}
-					}
+		packageName := astFile.Name.Name
+		for _, d := range astFile.Decls {
+			if fn, isFn := d.(*ast.FuncDecl); isFn {
+				isExported := ast.IsExported(fn.Name.Name)
+				hasParams := len(fn.Type.Params.List) != 0
+				if isExported && !hasParams {
+					functionName := fn.Name
+					funcs = append(
+						funcs,
+						FileToGenerate{
+							packageName,
+							functionName.Name,
+							path,
+						})
 				}
 			}
 		}
-
 	}
 	return funcs, nil
 }
@@ -87,7 +80,11 @@ func FindFuncsToCall(dirs []string) ([]FileToGenerate, error) {
 type FileToGenerate struct {
 	PackageName  string
 	FunctionName string
-	path         string
+	filePath     string
+}
+
+func (f *FileToGenerate) DirPath() string {
+	return filepath.Dir(f.filePath)
 }
 
 func (f *FileToGenerate) FuncSign() string {
@@ -102,10 +99,34 @@ func (f *FileToGenerate) HtmlFileName() string {
 
 // file location skipping the root
 func (f *FileToGenerate) Location(root string) string {
-	return f.path[len(root):]
+	return f.filePath[len(root):]
 }
 
 func (f *FileToGenerate) ToGenerate(root string, prefix string) string {
-	noRoot := f.path[len(root):]
-	return fmt.Sprintf("%s%s%s", prefix, noRoot, f.HtmlFileName())
+	return fmt.Sprint(
+		strings.Replace(f.DirPath(), root, prefix, 1),
+		"/",
+		f.HtmlFileName())
+}
+
+type groupedFiles struct {
+	TemplGoFiles filePaths
+	GoFiles      filePaths
+	OtherFiles   filePaths
+}
+
+func (f *filePaths) ToGroupedFiles() *groupedFiles {
+	var gf groupedFiles
+
+	for _, fp := range *f {
+		if fp[len(fp)-9:] == "_templ.go" {
+			gf.TemplGoFiles = append(gf.TemplGoFiles, fp)
+		} else if filepath.Ext(fp) == ".go" {
+			gf.GoFiles = append(gf.GoFiles, fp)
+		} else {
+			gf.OtherFiles = append(gf.OtherFiles, fp)
+		}
+	}
+
+	return &gf
 }
