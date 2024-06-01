@@ -25,8 +25,7 @@ func main() {
 	inputDir = finder.RemoveTrailingSlash(inputDir)
 	outputDir = finder.RemoveTrailingSlash(outputDir)
 
-	err := os.MkdirAll(outputDir, os.ModePerm)
-	if err != nil {
+	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 		log.Fatal("err creating dirs:", err)
 	}
 
@@ -45,6 +44,8 @@ func main() {
 	funcs, err := finder.FindFuncsToCall(groupedFiles.TemplGoFiles)
 	if err != nil {
 		log.Fatal("Error finding funcs:", err)
+	} else if len(funcs) < 1 {
+		log.Fatalf(`No components found in "%s"`, inputDir)
 	}
 
 	importsMap := map[string]bool{}
@@ -56,33 +57,33 @@ func main() {
 		importsSlice = append(importsSlice, fmt.Sprintf("%s/%s", modName, imp))
 	}
 
-	err = os.RemoveAll(outputDir)
-	if err != nil {
+	if err = os.RemoveAll(outputDir); err != nil {
 		log.Fatal("err removing files", err)
 	}
 
-	err = os.MkdirAll(outputScriptDirPath, os.ModePerm)
-	if err != nil {
+	if err = os.MkdirAll(outputScriptDirPath, os.ModePerm); err != nil {
 		log.Fatal("err creating temp dir:", err)
 	}
 
-	err = generator.Generate(getOutputScriptPath(), importsSlice, funcs, inputDir, outputDir)
-	if err != nil {
+	if err = generator.Generate(
+		getOutputScriptPath(),
+		importsSlice,
+		funcs,
+		inputDir,
+		outputDir,
+	); err != nil {
 		log.Fatal("err generating script", err)
 	}
 
 	cmd := exec.Command("go", "run", getOutputScriptPath())
-	err = cmd.Start()
-	if err != nil {
+	if err = cmd.Start(); err != nil {
 		log.Fatal("err starting script", err)
 	}
-	err = cmd.Wait()
-	if err != nil {
+	if err = cmd.Wait(); err != nil {
 		log.Fatal("err running script", err)
 	}
 
-	err = os.Remove(getOutputScriptPath())
-	if err != nil {
+	if err = os.Remove(getOutputScriptPath()); err != nil {
 		log.Fatal("err removing enerated script file", err)
 	}
 }
