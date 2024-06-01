@@ -130,3 +130,13 @@ func (f *filePaths) ToGroupedFiles() *groupedFiles {
 
 	return &gf
 }
+
+func RemoveTrailingSlash(text string) string {
+	textToReturn := text
+
+	lastSlashIndex := strings.LastIndex(text, "/")
+	if len(text)-1 == lastSlashIndex && lastSlashIndex != -1 {
+		textToReturn = text[:len(text)-1]
+	}
+	return textToReturn
+}

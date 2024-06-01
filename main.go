@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -16,8 +17,13 @@ const (
 )
 
 func main() {
-	outputDir := "dist"
-	inputDir := "web/pages"
+	var inputDir string
+	var outputDir string
+	flag.StringVar(&inputDir, "i", "web/pages", `Specify input directory.`)
+	flag.StringVar(&outputDir, "o", "dist", `Specify output directory.`)
+	flag.Parse()
+	inputDir = finder.RemoveTrailingSlash(inputDir)
+	outputDir = finder.RemoveTrailingSlash(outputDir)
 
 	err := os.MkdirAll(outputDir, os.ModePerm)
 	if err != nil {
@@ -60,7 +66,7 @@ func main() {
 		log.Fatal("err creating temp dir:", err)
 	}
 
-	err = generator.Generate(getOutputScriptPath(), importsSlice, funcs)
+	err = generator.Generate(getOutputScriptPath(), importsSlice, funcs, inputDir, outputDir)
 	if err != nil {
 		log.Fatal("err generating script", err)
 	}

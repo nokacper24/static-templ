@@ -67,12 +67,12 @@ type StringedData struct {
 	PackageName string
 }
 
-func Generate(outputPath string, imports []string, funcs []finder.FileToGenerate) error {
+func Generate(outputScriptPath string, imports []string, funcs []finder.FileToGenerate, inputDir string, outputDir string) error {
 	var stringed []StringedData
 	for _, f := range funcs {
 		stringed = append(stringed, StringedData{
 			f.FunctionName,
-			f.ToGenerate("web/pages", "dist"),
+			f.ToGenerate(inputDir, outputDir),
 			f.PackageName,
 		})
 	}
@@ -87,7 +87,7 @@ func Generate(outputPath string, imports []string, funcs []finder.FileToGenerate
 		return err
 	}
 
-	f, err := os.Create(outputPath)
+	f, err := os.Create(outputScriptPath)
 	if err != nil {
 		return err
 	}
