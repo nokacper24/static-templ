@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
+	"strings"
 
 	"github.com/nokacper24/static-templ/internal/finder"
 	"github.com/nokacper24/static-templ/internal/generator"
@@ -65,6 +67,12 @@ func main() {
 		log.Fatal("err creating temp dir:", err)
 	}
 
+	for _, f := range groupedFiles.OtherFiles {
+		if err := copyFile(f, strings.Replace(f, inputDir, outputDir, 1)); err != nil {
+			log.Fatal("could not copy file: ", err)
+		}
+	}
+
 	if err = generator.Generate(
 		getOutputScriptPath(),
 		importsSlice,
@@ -90,4 +98,20 @@ func main() {
 
 func getOutputScriptPath() string {
 	return fmt.Sprintf("%s/%s", outputScriptDirPath, outputScriptFileName)
+}
+
+func copyFile(fromPath string, toPath string) error {
+	if err := os.MkdirAll(path.Dir(toPath), os.ModePerm); err != nil {
+		return err
+	}
+
+	src, err := os.ReadFile(fromPath)
+	if err != nil {
+		return err
+	}
+
+	if err = os.WriteFile(toPath, src, 0644); err != nil {
+		return err
+	}
+	return nil
 }

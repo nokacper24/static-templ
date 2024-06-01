@@ -111,6 +111,7 @@ func (f *FileToGenerate) ToGenerate(root string, prefix string) string {
 
 type groupedFiles struct {
 	TemplGoFiles filePaths
+	TemplFiles   filePaths
 	GoFiles      filePaths
 	OtherFiles   filePaths
 }
@@ -123,6 +124,8 @@ func (f *filePaths) ToGroupedFiles() *groupedFiles {
 			gf.TemplGoFiles = append(gf.TemplGoFiles, fp)
 		} else if filepath.Ext(fp) == ".go" {
 			gf.GoFiles = append(gf.GoFiles, fp)
+		} else if filepath.Ext(fp) == ".templ" {
+			gf.TemplFiles = append(gf.TemplFiles, fp)
 		} else {
 			gf.OtherFiles = append(gf.OtherFiles, fp)
 		}
