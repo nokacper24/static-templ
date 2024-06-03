@@ -56,10 +56,8 @@ func main() {
 		log.Fatal("err creating temp dir:", err)
 	}
 
-	for _, f := range groupedFiles.OtherFiles {
-		if err := copyFile(f, strings.Replace(f, inputDir, outputDir, 1)); err != nil {
-			log.Fatal("could not copy file: ", err)
-		}
+	if err = copyFilesIntoOutputDir(groupedFiles.OtherFiles, inputDir, outputDir); err != nil {
+		log.Fatal("err copying files:", err)
 	}
 
 	if err = generator.Generate(
@@ -101,6 +99,15 @@ func copyFile(fromPath string, toPath string) error {
 
 	if err = os.WriteFile(toPath, src, 0644); err != nil {
 		return err
+	}
+	return nil
+}
+
+func copyFilesIntoOutputDir(files []string, inputDir string, outputDir string) error {
+	for _, f := range files {
+		if err := copyFile(f, strings.Replace(f, inputDir, outputDir, 1)); err != nil {
+			return err
+		}
 	}
 	return nil
 }
