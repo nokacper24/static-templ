@@ -79,7 +79,7 @@ func main() {
 	}
 
 	if err = os.Remove(getOutputScriptPath()); err != nil {
-		log.Fatal("err removing enerated script file", err)
+		log.Fatal("err removing script file", err)
 	}
 }
 
