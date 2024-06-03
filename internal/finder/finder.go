@@ -103,10 +103,10 @@ func (f *FunctionToCall) HtmlFileName() string {
 }
 
 type groupedFiles struct {
-	TemplGoFiles filePaths
-	TemplFiles   filePaths
-	GoFiles      filePaths
-	OtherFiles   filePaths
+	TemplGoFiles filePaths // "_templ.go" files
+	TemplFiles   filePaths // ".templ" files
+	GoFiles      filePaths // ".go" files, excluding "_templ.go"
+	OtherFiles   filePaths // other files
 }
 
 // Groups files provided into TemplGoFiles ("_templ.go"), TemplFiles (".templ"), GoFiles (other ".go" files) and OtherFiles.
@@ -126,6 +126,9 @@ func (f *filePaths) toGroupedFiles() *groupedFiles {
 	return &gf
 }
 
+// Finds paths to all files in the given directory and all its subdirecotries.
+//
+// Groups the files into groupedFiles type, includes TemplGoFiles ("_templ.go"), TemplFiles (".templ"), GoFiles (other ".go" files) and OtherFiles.
 func FindFilesInDir(root string) (*groupedFiles, error) {
 	allFiles, err := findAllFiles(root)
 	if err != nil {
@@ -134,6 +137,7 @@ func FindFilesInDir(root string) (*groupedFiles, error) {
 	return allFiles.toGroupedFiles(), nil
 }
 
+// Determines all imports needed to call provided functions.
 func FindImports(funcs []FunctionToCall, modulePath string) []string {
 	importsMap := map[string]bool{}
 	for _, f := range funcs {
