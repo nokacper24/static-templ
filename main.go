@@ -31,17 +31,15 @@ func main() {
 		log.Fatal("err creating dirs:", err)
 	}
 
-	modName, err := finder.FindModulePath()
+	modulePath, err := finder.FindModulePath()
 	if err != nil {
 		log.Fatal("Error finding module name:", err)
 	}
 
-	allFiles, err := finder.FindAllFiles(inputDir)
+	groupedFiles, err := finder.FindFilesInDir(inputDir)
 	if err != nil {
-		log.Fatal("Error finding go dirs:", err)
+		log.Fatal("Error finding files:", err)
 	}
-
-	groupedFiles := allFiles.ToGroupedFiles()
 
 	funcs, err := finder.FindFunctionsInFiles(groupedFiles.TemplGoFiles)
 	if err != nil {
@@ -50,14 +48,7 @@ func main() {
 		log.Fatalf(`No components found in "%s"`, inputDir)
 	}
 
-	importsMap := map[string]bool{}
-	for _, f := range funcs {
-		importsMap[f.DirPath()] = true
-	}
-	var importsSlice []string
-	for imp := range importsMap {
-		importsSlice = append(importsSlice, fmt.Sprintf("%s/%s", modName, imp))
-	}
+	imports := finder.FindImports(funcs, modulePath)
 
 	if err = os.RemoveAll(outputDir); err != nil {
 		log.Fatal("err removing files", err)
@@ -75,7 +66,7 @@ func main() {
 
 	if err = generator.Generate(
 		getOutputScriptPath(),
-		importsSlice,
+		imports,
 		funcs,
 		inputDir,
 		outputDir,

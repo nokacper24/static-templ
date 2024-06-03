@@ -31,7 +31,7 @@ func FindModulePath() (string, error) {
 type filePaths []string
 
 // Finds paths to all files in the given directory and all its subdirecotries.
-func FindAllFiles(root string) (filePaths, error) {
+func findAllFiles(root string) (filePaths, error) {
 	var paths filePaths
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -110,7 +110,7 @@ type groupedFiles struct {
 }
 
 // Groups files provided into TemplGoFiles ("_templ.go"), TemplFiles (".templ"), GoFiles (other ".go" files) and OtherFiles.
-func (f *filePaths) ToGroupedFiles() *groupedFiles {
+func (f *filePaths) toGroupedFiles() *groupedFiles {
 	var gf groupedFiles
 	for _, fp := range *f {
 		if fp[len(fp)-9:] == "_templ.go" {
@@ -124,4 +124,24 @@ func (f *filePaths) ToGroupedFiles() *groupedFiles {
 		}
 	}
 	return &gf
+}
+
+func FindFilesInDir(root string) (*groupedFiles, error) {
+	allFiles, err := findAllFiles(root)
+	if err != nil {
+		return nil, err
+	}
+	return allFiles.toGroupedFiles(), nil
+}
+
+func FindImports(funcs []FunctionToCall, modulePath string) []string {
+	importsMap := map[string]bool{}
+	for _, f := range funcs {
+		importsMap[filepath.Dir(f.FilePath)] = true
+	}
+	var importsSlice []string
+	for imp := range importsMap {
+		importsSlice = append(importsSlice, fmt.Sprintf("%s/%s", modulePath, imp))
+	}
+	return importsSlice
 }

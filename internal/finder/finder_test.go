@@ -9,7 +9,7 @@ func TestToGroupedFiles(t *testing.T) {
 		"theree/file_templ.go",
 	}
 
-	grouped := filePaths.ToGroupedFiles()
+	grouped := filePaths.toGroupedFiles()
 
 	if len(grouped.GoFiles) != 1 {
 		t.Fatal("expected 1 go file")
