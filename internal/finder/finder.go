@@ -13,6 +13,7 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
+// Finds path of the Go module the program is executed in.
 func FindModulePath() (string, error) {
 	modFile, err := os.ReadFile("go.mod")
 	if err != nil {
@@ -29,6 +30,7 @@ func FindModulePath() (string, error) {
 
 type filePaths []string
 
+// Finds paths to all files in the given directory and all its subdirecotries.
 func FindAllFiles(root string) (filePaths, error) {
 	var paths filePaths
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
@@ -48,11 +50,14 @@ func FindAllFiles(root string) (filePaths, error) {
 	return paths, nil
 }
 
-func FindFuncsToCall(files filePaths) ([]FileToGenerate, error) {
-	var funcs []FileToGenerate
+// Goes throught the file paths provided and finds all exported fucntrions that take 0 parameters.
+// Files provided must be valid Go source files.
+func FindFunctionsInFiles(files filePaths) ([]FunctionToCall, error) {
+	var funcs []FunctionToCall
 
+	fileSt := token.NewFileSet()
 	for _, path := range files {
-		astFile, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.AllErrors)
+		astFile, err := parser.ParseFile(fileSt, path, nil, parser.AllErrors)
 		if err != nil {
 			return nil, err
 		}
@@ -65,7 +70,7 @@ func FindFuncsToCall(files filePaths) ([]FileToGenerate, error) {
 					functionName := fn.Name
 					funcs = append(
 						funcs,
-						FileToGenerate{
+						FunctionToCall{
 							packageName,
 							functionName.Name,
 							path,
@@ -77,36 +82,24 @@ func FindFuncsToCall(files filePaths) ([]FileToGenerate, error) {
 	return funcs, nil
 }
 
-type FileToGenerate struct {
+type FunctionToCall struct {
 	PackageName  string
 	FunctionName string
-	filePath     string
+	FilePath     string // used to determine import needed
 }
 
-func (f *FileToGenerate) DirPath() string {
-	return filepath.Dir(f.filePath)
+// Returns path to the directory in which the function can be found.
+func (f *FunctionToCall) DirPath() string {
+	return filepath.Dir(f.FilePath)
 }
 
-func (f *FileToGenerate) FuncSign() string {
-	return fmt.Sprintf("%s.%s()", f.PackageName, f.FunctionName)
-}
-
-func (f *FileToGenerate) HtmlFileName() string {
+// Returns a string to be used as the name for HTML file generated from this component.
+//
+// Base don the original function name, with "-" repalced by "_", lowercased and .html added at the end.
+func (f *FunctionToCall) HtmlFileName() string {
 	noUnderscore := strings.ReplaceAll(f.FunctionName, "_", "-")
 	lowered := strings.ToLower(noUnderscore)
 	return fmt.Sprintf("%s.html", lowered)
-}
-
-// file location skipping the root
-func (f *FileToGenerate) Location(root string) string {
-	return f.filePath[len(root):]
-}
-
-func (f *FileToGenerate) ToGenerate(root string, prefix string) string {
-	return fmt.Sprint(
-		strings.Replace(f.DirPath(), root, prefix, 1),
-		"/",
-		f.HtmlFileName())
 }
 
 type groupedFiles struct {
@@ -116,9 +109,9 @@ type groupedFiles struct {
 	OtherFiles   filePaths
 }
 
+// Groups files provided into TemplGoFiles ("_templ.go"), TemplFiles (".templ"), GoFiles (other ".go" files) and OtherFiles.
 func (f *filePaths) ToGroupedFiles() *groupedFiles {
 	var gf groupedFiles
-
 	for _, fp := range *f {
 		if fp[len(fp)-9:] == "_templ.go" {
 			gf.TemplGoFiles = append(gf.TemplGoFiles, fp)
@@ -130,16 +123,5 @@ func (f *filePaths) ToGroupedFiles() *groupedFiles {
 			gf.OtherFiles = append(gf.OtherFiles, fp)
 		}
 	}
-
 	return &gf
-}
-
-func RemoveTrailingSlash(text string) string {
-	textToReturn := text
-
-	lastSlashIndex := strings.LastIndex(text, "/")
-	if len(text)-1 == lastSlashIndex && lastSlashIndex != -1 {
-		textToReturn = text[:len(text)-1]
-	}
-	return textToReturn
 }

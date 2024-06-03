@@ -24,8 +24,8 @@ func main() {
 	flag.StringVar(&inputDir, "i", "web/pages", `Specify input directory.`)
 	flag.StringVar(&outputDir, "o", "dist", `Specify output directory.`)
 	flag.Parse()
-	inputDir = finder.RemoveTrailingSlash(inputDir)
-	outputDir = finder.RemoveTrailingSlash(outputDir)
+	inputDir = strings.TrimRight(inputDir, "/")
+	outputDir = strings.TrimRight(outputDir, "/")
 
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 		log.Fatal("err creating dirs:", err)
@@ -43,7 +43,7 @@ func main() {
 
 	groupedFiles := allFiles.ToGroupedFiles()
 
-	funcs, err := finder.FindFuncsToCall(groupedFiles.TemplGoFiles)
+	funcs, err := finder.FindFunctionsInFiles(groupedFiles.TemplGoFiles)
 	if err != nil {
 		log.Fatal("Error finding funcs:", err)
 	} else if len(funcs) < 1 {
