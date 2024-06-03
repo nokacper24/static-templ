@@ -48,8 +48,6 @@ func main() {
 		log.Fatalf(`No components found in "%s"`, inputDir)
 	}
 
-	imports := finder.FindImports(funcs, modulePath)
-
 	if err = os.RemoveAll(outputDir); err != nil {
 		log.Fatal("err removing files", err)
 	}
@@ -66,7 +64,7 @@ func main() {
 
 	if err = generator.Generate(
 		getOutputScriptPath(),
-		imports,
+		finder.FindImports(funcs, modulePath),
 		funcs,
 		inputDir,
 		outputDir,
