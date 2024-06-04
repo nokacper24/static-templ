@@ -4,7 +4,7 @@ Build static HTML websites with file based routing, using [templ](https://github
 ## Installation
 
 ```bash
-go install github.com/nokacper24/static-templ
+go install github.com/nokacper24/static-templ@latest
 ```
 
 ## Usage
