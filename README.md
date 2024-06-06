@@ -26,6 +26,6 @@ All files other than `.go` and `.templ` files will be copied to the output direc
 
 
 ## Background
-Templ does support rendering components into files, as shown in their [documentation](https://templ.guide/static-rendering/generating-static-html-files-with-templ/). I wanted to avoid writing code to do so individually for each page.
+Templ does support rendering components into files, as shown in their [documentation](https://templ.guide/static-rendering/generating-static-html-files-with-templ/). I wanted to avoid writing code to do so manually for each page.
 
-It works by automatically creating a script that will render wanted components and write them intoto files, executes the script and cleans up after itself.
+static-templ creates a script that will render wanted components and write them intoto files, executes it and cleans up after itself.
