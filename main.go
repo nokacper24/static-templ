@@ -27,8 +27,10 @@ func main() {
 	inputDir = strings.TrimRight(inputDir, "/")
 	outputDir = strings.TrimRight(outputDir, "/")
 
-	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
-		log.Fatal("err creating dirs:", err)
+	if outputDir != inputDir {
+		if err := clearAndCreateDir(outputDir); err != nil {
+			log.Fatal("Error preparing output directory:", err)
+		}
 	}
 
 	modulePath, err := finder.FindModulePath()
@@ -46,10 +48,6 @@ func main() {
 		log.Fatal("Error finding funcs:", err)
 	} else if len(funcs) < 1 {
 		log.Fatalf(`No components found in "%s"`, inputDir)
-	}
-
-	if err = os.RemoveAll(outputDir); err != nil {
-		log.Fatal("err removing files", err)
 	}
 
 	if err = os.MkdirAll(outputScriptDirPath, os.ModePerm); err != nil {
@@ -85,6 +83,13 @@ func main() {
 
 func getOutputScriptPath() string {
 	return fmt.Sprintf("%s/%s", outputScriptDirPath, outputScriptFileName)
+}
+
+func clearAndCreateDir(dir string) error {
+	if err := os.RemoveAll(dir); err != nil {
+		return err
+	}
+	return os.MkdirAll(dir, os.ModePerm)
 }
 
 func copyFile(fromPath string, toPath string) error {
