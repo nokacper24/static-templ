@@ -1,12 +1,15 @@
 package generator
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/a-h/templ/cmd/templ/fmtcmd"
+	"github.com/a-h/templ/cmd/templ/generatecmd"
 	"github.com/nokacper24/static-templ/internal/finder"
 )
 
@@ -42,7 +45,7 @@ func main() {
 		if err := os.MkdirAll(filepath.Dir(comp.path), os.ModePerm); err != nil {
 			log.Fatal("error creating dirs:", err)
 		}
-	
+
 		file, err := os.Create(comp.path)
 		if err != nil {
 			log.Fatal("error creating file:", err)
@@ -113,4 +116,22 @@ func newFilePath(opriginalDirPath string, oldPrefix string, newPrefix string, fi
 		strings.Replace(opriginalDirPath, oldPrefix, newPrefix, 1),
 		"/",
 		filename)
+}
+
+// Run the fmt command
+func RunTemplFmt(files []string) error {
+	args := fmtcmd.Arguments{
+		Files: files,
+	}
+	return fmtcmd.Run(os.Stdout, args)
+}
+
+// Run the generate command
+func RunTemplGenerate() error {
+	args := generatecmd.Arguments{
+		Path: ".",
+	}
+
+	ctx := context.Background()
+	return generatecmd.Run(ctx, os.Stdout, args)
 }
