@@ -21,11 +21,11 @@ const (
 func main() {
 	var inputDir string
 	var outputDir string
-	var embed bool
+	var runTempl bool
 
 	flag.StringVar(&inputDir, "i", "web/pages", `Specify input directory.`)
 	flag.StringVar(&outputDir, "o", "dist", `Specify output directory.`)
-	flag.BoolVar(&embed, "e", false, "Run templ fmt & generate commands.")
+	flag.BoolVar(&runTempl, "t", false, "Run templ fmt & generate commands.")
 	flag.Parse()
 
 	inputDir = strings.TrimRight(inputDir, "/")
@@ -47,7 +47,7 @@ func main() {
 		log.Fatal("Error finding files:", err)
 	}
 
-	if embed {
+	if runTempl {
 		fmt.Println("running embed templ commands")
 		err := generator.RunTemplFmt(groupedFiles.TemplFiles)
 		if err != nil {
