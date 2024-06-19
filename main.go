@@ -19,13 +19,13 @@ const (
 )
 
 func main() {
-	var inputDir string
-	var outputDir string
-	var runTempl bool
+	var inputDir, outputDir string
+	var runFormat, runGenerate bool
 
 	flag.StringVar(&inputDir, "i", "web/pages", `Specify input directory.`)
 	flag.StringVar(&outputDir, "o", "dist", `Specify output directory.`)
-	flag.BoolVar(&runTempl, "t", false, "Run templ fmt & generate commands.")
+	flag.BoolVar(&runFormat, "f", false, "Run templ fmt.")
+	flag.BoolVar(&runGenerate, "g", false, "Run templ generate.")
 	flag.Parse()
 
 	inputDir = strings.TrimRight(inputDir, "/")
@@ -47,12 +47,15 @@ func main() {
 		log.Fatal("Error finding files:", err)
 	}
 
-	if runTempl {
+	if runFormat {
 		err := generator.RunTemplFmt(groupedFiles.TemplFiles)
 		if err != nil {
 			log.Fatalf("failed to run 'templ fmt' command: %v", err)
 		}
-		err = generator.RunTemplGenerate()
+	}
+
+	if runGenerate {
+		err := generator.RunTemplGenerate()
 		if err != nil {
 			log.Fatalf("failed to run 'templ generate' command: %v", err)
 		}
