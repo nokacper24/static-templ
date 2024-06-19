@@ -48,7 +48,6 @@ func main() {
 	}
 
 	if runTempl {
-		fmt.Println("running embed templ commands")
 		err := generator.RunTemplFmt(groupedFiles.TemplFiles)
 		if err != nil {
 			log.Fatalf("failed to run 'templ fmt' command: %v", err)
