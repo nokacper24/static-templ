@@ -21,9 +21,13 @@ const (
 func main() {
 	var inputDir string
 	var outputDir string
+	var runTempl bool
+
 	flag.StringVar(&inputDir, "i", "web/pages", `Specify input directory.`)
 	flag.StringVar(&outputDir, "o", "dist", `Specify output directory.`)
+	flag.BoolVar(&runTempl, "t", false, "Run templ fmt & generate commands.")
 	flag.Parse()
+
 	inputDir = strings.TrimRight(inputDir, "/")
 	outputDir = strings.TrimRight(outputDir, "/")
 
@@ -41,6 +45,18 @@ func main() {
 	groupedFiles, err := finder.FindFilesInDir(inputDir)
 	if err != nil {
 		log.Fatal("Error finding files:", err)
+	}
+
+	if runTempl {
+		fmt.Println("running embed templ commands")
+		err := generator.RunTemplFmt(groupedFiles.TemplFiles)
+		if err != nil {
+			log.Fatalf("failed to run 'templ fmt' command: %v", err)
+		}
+		err = generator.RunTemplGenerate()
+		if err != nil {
+			log.Fatalf("failed to run 'templ generate' command: %v", err)
+		}
 	}
 
 	funcs, err := finder.FindFunctionsInFiles(groupedFiles.TemplGoFiles)
