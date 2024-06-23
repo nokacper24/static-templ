@@ -21,14 +21,20 @@ const (
 func main() {
 	var inputDir string
 	var outputDir string
+	var runTempl bool
+
 	flag.StringVar(&inputDir, "i", "web/pages", `Specify input directory.`)
 	flag.StringVar(&outputDir, "o", "dist", `Specify output directory.`)
+	flag.BoolVar(&runTempl, "t", false, "Run templ fmt & generate commands.")
 	flag.Parse()
+
 	inputDir = strings.TrimRight(inputDir, "/")
 	outputDir = strings.TrimRight(outputDir, "/")
 
-	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
-		log.Fatal("err creating dirs:", err)
+	if outputDir != inputDir {
+		if err := clearAndCreateDir(outputDir); err != nil {
+			log.Fatal("Error preparing output directory:", err)
+		}
 	}
 
 	modulePath, err := finder.FindModulePath()
@@ -41,15 +47,23 @@ func main() {
 		log.Fatal("Error finding files:", err)
 	}
 
+	if runTempl {
+		fmt.Println("running embed templ commands")
+		err := generator.RunTemplFmt(groupedFiles.TemplFiles)
+		if err != nil {
+			log.Fatalf("failed to run 'templ fmt' command: %v", err)
+		}
+		err = generator.RunTemplGenerate()
+		if err != nil {
+			log.Fatalf("failed to run 'templ generate' command: %v", err)
+		}
+	}
+
 	funcs, err := finder.FindFunctionsInFiles(groupedFiles.TemplGoFiles)
 	if err != nil {
 		log.Fatal("Error finding funcs:", err)
 	} else if len(funcs) < 1 {
 		log.Fatalf(`No components found in "%s"`, inputDir)
-	}
-
-	if err = os.RemoveAll(outputDir); err != nil {
-		log.Fatal("err removing files", err)
 	}
 
 	if err = os.MkdirAll(outputScriptDirPath, os.ModePerm); err != nil {
@@ -85,6 +99,13 @@ func main() {
 
 func getOutputScriptPath() string {
 	return fmt.Sprintf("%s/%s", outputScriptDirPath, outputScriptFileName)
+}
+
+func clearAndCreateDir(dir string) error {
+	if err := os.RemoveAll(dir); err != nil {
+		return err
+	}
+	return os.MkdirAll(dir, os.ModePerm)
 }
 
 func copyFile(fromPath string, toPath string) error {

@@ -13,6 +13,13 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
+type FunctionToCall struct {
+	FileName     string // preserve the templ filename for the generated html one
+	PackageName  string
+	FunctionName string
+	FilePath     string // used to determine import needed
+}
+
 // Finds path of the Go module the program is executed in.
 func FindModulePath() (string, error) {
 	modFile, err := os.ReadFile("go.mod")
@@ -71,6 +78,7 @@ func FindFunctionsInFiles(files filePaths) ([]FunctionToCall, error) {
 					funcs = append(
 						funcs,
 						FunctionToCall{
+							getFileNameWithoutExt(path),
 							packageName,
 							functionName.Name,
 							path,
@@ -82,22 +90,22 @@ func FindFunctionsInFiles(files filePaths) ([]FunctionToCall, error) {
 	return funcs, nil
 }
 
-type FunctionToCall struct {
-	PackageName  string
-	FunctionName string
-	FilePath     string // used to determine import needed
-}
-
 // Returns path to the directory in which the function can be found.
 func (f *FunctionToCall) DirPath() string {
 	return filepath.Dir(f.FilePath)
 }
 
+// Returns the filename without path and extension.
+func getFileNameWithoutExt(path string) string {
+	fileName := filepath.Base(path) // Get the base filename with extension
+	return fileName[:len(fileName)-9]
+}
+
 // Returns a string to be used as the name for HTML file generated from this component.
 //
-// Base don the original function name, with "-" repalced by "_", lowercased and .html added at the end.
+// Based on the original file name, with "-" replaced by "_", lowercased and .html added at the end.
 func (f *FunctionToCall) HtmlFileName() string {
-	noUnderscore := strings.ReplaceAll(f.FunctionName, "_", "-")
+	noUnderscore := strings.ReplaceAll(f.FileName, "_", "-")
 	lowered := strings.ToLower(noUnderscore)
 	return fmt.Sprintf("%s.html", lowered)
 }
