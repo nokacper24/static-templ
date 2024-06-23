@@ -8,8 +8,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 
+	"github.com/gobeam/stringy"
 	"golang.org/x/mod/modfile"
 )
 
@@ -113,7 +113,8 @@ func getFileNameWithoutExt(path string) string {
 // Returns a string to be used as the name for HTML file generated from this component.
 //
 // Based on the original file name if component is the only one declared in the given file. Otherwise the function name is used.
-// Character "-" replaced by "_", lowercased and .html added at the end.
+//
+// The filename is slugifdied, e.g. "HelloWorld" -> "hello-world.html"
 func (f *FunctionToCall) HtmlFileName() string {
 	var filename string
 	if f.IsAlone {
@@ -122,9 +123,9 @@ func (f *FunctionToCall) HtmlFileName() string {
 		filename = f.FunctionName
 	}
 
-	noUnderscore := strings.ReplaceAll(filename, "_", "-")
-	lowered := strings.ToLower(noUnderscore)
-	return fmt.Sprintf("%s.html", lowered)
+	str := stringy.New(filename)
+	slugified := str.KebabCase().ToLower()
+	return fmt.Sprintf("%s.html", slugified)
 }
 
 type groupedFiles struct {
