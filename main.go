@@ -22,10 +22,11 @@ func main() {
 	var inputDir, outputDir string
 	var runFormat, runGenerate bool
 
-	flag.StringVar(&inputDir, "i", "web/pages", `Specify input directory.`)
-	flag.StringVar(&outputDir, "o", "dist", `Specify output directory.`)
+	flag.StringVar(&inputDir, "i", "web/pages", "Specify input directory.")
+	flag.StringVar(&outputDir, "o", "dist", "Specify output directory.")
 	flag.BoolVar(&runFormat, "f", false, "Run templ fmt.")
 	flag.BoolVar(&runGenerate, "g", false, "Run templ generate.")
+	flag.Usage = usage
 	flag.Parse()
 
 	inputDir = strings.TrimRight(inputDir, "/")
@@ -97,6 +98,25 @@ func main() {
 	if err = os.Remove(getOutputScriptPath()); err != nil {
 		log.Fatal("err removing script file", err)
 	}
+}
+
+func usage() {
+	fmt.Fprintf(os.Stderr, `Usage of %s:
+%s [options]
+
+Options:
+  -i  Specify input directory (default "web/pages").
+  -o  Specify output directory (default "dist").
+  -f  Run templ fmt.
+  -g  Run templ generate.
+
+Examples:
+  # Specify input and output directories
+  %s -i web/demos -o output
+
+  # Specify input directory, run templ generate and output to default directory
+  %s -i web/demos -g=true
+`, os.Args[0], os.Args[0], os.Args[0], os.Args[0])
 }
 
 func getOutputScriptPath() string {
