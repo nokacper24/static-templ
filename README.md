@@ -19,6 +19,7 @@ Options:
   -o  Specify output directory (default "dist").
   -f  Run templ fmt.
   -g  Run templ generate.
+  -d  Keep the generation script after completion for inspection and debugging.
 
 Examples:
   # Specify input and output directories
@@ -38,6 +39,6 @@ All files other than `.go` and `.templ` files will be copied to the output direc
 
 ## Background
 
-Templ does support rendering components into files, as shown in their [documentation](https://templ.guide/static-rendering/generating-static-html-files-with-templ/). I wanted to avoid writing code to do so manually for each page.
+Templ does support rendering components into files, as shown in their [documentation](https://templ.guide/static-rendering/generating-static-html-files-with-templ/). I wanted to avoid manually writing code for each page.
 
-static-templ creates a script that will render wanted components and write them intoto files, executes it and cleans up after itself.
+`static-templ` creates a script that renders the desired components, writes them into files, executes the script, and cleans up afterward.

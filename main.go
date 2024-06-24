@@ -20,12 +20,13 @@ const (
 
 func main() {
 	var inputDir, outputDir string
-	var runFormat, runGenerate bool
+	var runFormat, runGenerate, debug bool
 
 	flag.StringVar(&inputDir, "i", "web/pages", "Specify input directory.")
 	flag.StringVar(&outputDir, "o", "dist", "Specify output directory.")
 	flag.BoolVar(&runFormat, "f", false, "Run templ fmt.")
 	flag.BoolVar(&runGenerate, "g", false, "Run templ generate.")
+	flag.BoolVar(&debug, "d", false, "Keep the generation script after completion for inspection and debugging.")
 	flag.Usage = usage
 	flag.Parse()
 
@@ -95,8 +96,10 @@ func main() {
 		log.Fatal("err running script", err)
 	}
 
-	if err = os.Remove(getOutputScriptPath()); err != nil {
-		log.Fatal("err removing script file", err)
+	if !debug {
+		if err = os.RemoveAll(outputScriptDirPath); err != nil {
+			log.Fatal("err removing script folder", err)
+		}
 	}
 }
 
@@ -109,6 +112,7 @@ Options:
   -o  Specify output directory (default "dist").
   -f  Run templ fmt.
   -g  Run templ generate.
+  -d  Keep the generation script after completion for inspection and debugging.
 
 Examples:
   # Specify input and output directories
