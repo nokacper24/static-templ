@@ -19,6 +19,7 @@ Options:
   -o  Specify output directory (default "dist").
   -f  Run templ fmt.
   -g  Run templ generate.
+  -d  Keep the generation script after completion for inspection and debugging.
 
 Examples:
   # Specify input and output directories
