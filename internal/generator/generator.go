@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/a-h/templ/cmd/templ/fmtcmd"
 	"github.com/a-h/templ/cmd/templ/generatecmd"
+	"github.com/a-h/templ/cmd/templ/sloghandler"
 	"github.com/nokacper24/static-templ/internal/finder"
 )
 
@@ -74,6 +76,8 @@ type StringedData struct {
 	PackageName string
 }
 
+var logger = slog.New(sloghandler.NewHandler(os.Stderr, nil))
+
 func Generate(outputScriptPath string, imports []string, funcs []finder.FunctionToCall, inputDir string, outputDir string) error {
 	var stringed []StringedData
 	for _, f := range funcs {
@@ -123,7 +127,7 @@ func RunTemplFmt(files []string) error {
 	args := fmtcmd.Arguments{
 		Files: files,
 	}
-	return fmtcmd.Run(os.Stdout, args)
+	return fmtcmd.Run(logger, os.Stdin, os.Stdout, args)
 }
 
 // Run the generate command
@@ -133,5 +137,5 @@ func RunTemplGenerate() error {
 	}
 
 	ctx := context.Background()
-	return generatecmd.Run(ctx, os.Stdout, args)
+	return generatecmd.Run(ctx, logger, args)
 }
