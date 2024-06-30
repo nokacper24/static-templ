@@ -11,10 +11,12 @@ import (
 
 	"github.com/nokacper24/static-templ/internal/finder"
 	"github.com/nokacper24/static-templ/internal/generator"
-	"golang.org/x/mod/modfile"
 )
 
-const version = "1.0.0"
+const (
+	version      = "1.0.0"
+	templVersion = "0.2.731"
+)
 
 const (
 	outputScriptDirPath  string = "temp"
@@ -32,7 +34,7 @@ func main() {
 	switch os.Args[1] {
 	case "version", "--version":
 		versionCmd.Parse(os.Args[2:])
-		printVersion()
+		printVersion(version, templVersion)
 		return
 	default:
 		// Continue with existing flag parsing
@@ -148,30 +150,9 @@ Examples:
 `, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
 }
 
-func printVersion() {
+func printVersion(version, templVersion string) {
 	templModulePath := "github.com/a-h/templ"
-	templModuleVersion, err := getTemplModuleVersion(templModulePath)
-	if err != nil {
-		log.Fatalf("Error retrieving module version: %v", err)
-	}
-	fmt.Printf("Version: %s (built with %s@%s)\n", version, templModulePath, templModuleVersion)
-}
-
-func getTemplModuleVersion(modulePath string) (string, error) {
-	data, err := os.ReadFile("go.mod")
-	if err != nil {
-		return "", err
-	}
-	modFile, err := modfile.Parse("go.mod", data, nil)
-	if err != nil {
-		return "", err
-	}
-	for _, req := range modFile.Require {
-		if req.Mod.Path == modulePath {
-			return req.Mod.Version, nil
-		}
-	}
-	return "", fmt.Errorf("module %s not found in go.mod", modulePath)
+	fmt.Printf("Version: %s (built with %s@v%s)\n", version, templModulePath, templVersion)
 }
 
 func clearAndCreateDir(dir string) error {
