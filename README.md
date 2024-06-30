@@ -12,14 +12,17 @@ go install github.com/nokacper24/static-templ@latest
 
 ```bash
 Usage of static-templ:
-static-templ [options]
+static-templ [flags] [subcommands]
 
-Options:
+Flags:
   -i  Specify input directory (default "web/pages").
   -o  Specify output directory (default "dist").
   -f  Run templ fmt.
   -g  Run templ generate.
   -d  Keep the generation script after completion for inspection and debugging.
+
+Subcommands:
+  version  Display the version information.
 
 Examples:
   # Specify input and output directories
@@ -27,6 +30,9 @@ Examples:
 
   # Specify input directory, run templ generate and output to default directory
   static-templ -i web/demos -g=true
+
+  # Display the version information
+  static-templ version
 ```
 
 ## Assumptions
