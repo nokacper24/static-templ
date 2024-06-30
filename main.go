@@ -50,16 +50,31 @@ func main() {
 	}
 
 	if runFormat {
-		err := generator.RunTemplFmt(groupedFiles.TemplFiles)
-		if err != nil {
-			log.Fatalf("failed to run 'templ fmt' command: %v", err)
-		}
+		done := make(chan struct{})
+		go func() {
+			err := generator.RunTemplFmt(groupedFiles.TemplFiles, done)
+			if err != nil {
+				log.Fatalf("failed to run 'templ fmt' command: %v", err)
+			}
+		}()
+		<-done
+		log.Println("completed running 'templ fmt'")
 	}
 
 	if runGenerate {
-		err := generator.RunTemplGenerate()
+		done := make(chan struct{})
+		go func() {
+			err := generator.RunTemplGenerate(done)
+			if err != nil {
+				log.Fatalf("failed to run 'templ generate' command: %v", err)
+			}
+		}()
+		<-done
+		log.Println("completed running 'templ generate'")
+		// run groupedFiles again after templ generate command execution to get TemplGoFiles updated
+		groupedFiles, err = finder.FindFilesInDir(inputDir)
 		if err != nil {
-			log.Fatalf("failed to run 'templ generate' command: %v", err)
+			log.Fatal("Error finding _templ.go files after templ generate completion:", err)
 		}
 	}
 

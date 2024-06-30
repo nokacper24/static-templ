@@ -123,19 +123,22 @@ func newFilePath(opriginalDirPath string, oldPrefix string, newPrefix string, fi
 }
 
 // Run the fmt command
-func RunTemplFmt(files []string) error {
+func RunTemplFmt(files []string, done chan<- struct{}) error {
 	args := fmtcmd.Arguments{
 		Files: files,
 	}
-	return fmtcmd.Run(logger, os.Stdin, os.Stdout, args)
+	err := fmtcmd.Run(logger, os.Stdin, os.Stdout, args)
+	done <- struct{}{}
+	return err
 }
 
 // Run the generate command
-func RunTemplGenerate() error {
+func RunTemplGenerate(done chan<- struct{}) error {
 	args := generatecmd.Arguments{
 		Path: ".",
 	}
-
 	ctx := context.Background()
-	return generatecmd.Run(ctx, logger, args)
+	err := generatecmd.Run(ctx, logger, args)
+	done <- struct{}{}
+	return err
 }
