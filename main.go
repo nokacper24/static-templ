@@ -148,7 +148,7 @@ func printVersion() {
 	if err != nil {
 		log.Fatalf("Error retrieving module version: %v", err)
 	}
-	fmt.Printf("Version: %s (built with: %s %s)\n", version, templModulePath, templModuleVersion)
+	fmt.Printf("Version: %s (built with %s@%s)\n", version, templModulePath, templModuleVersion)
 }
 
 func getTemplModuleVersion(modulePath string) (string, error) {
