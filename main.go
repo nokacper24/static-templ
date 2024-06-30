@@ -124,14 +124,17 @@ func main() {
 
 func usage() {
 	fmt.Fprintf(os.Stderr, `Usage of %s:
-%s [options]
+%s [flags] [subcommands]
 
-Options:
+Flags:
   -i  Specify input directory (default "web/pages").
   -o  Specify output directory (default "dist").
   -f  Run templ fmt.
   -g  Run templ generate.
   -d  Keep the generation script after completion for inspection and debugging.
+
+Subcommands:
+  version  Display the version information.
 
 Examples:
   # Specify input and output directories
@@ -139,7 +142,10 @@ Examples:
 
   # Specify input directory, run templ generate and output to default directory
   %s -i web/demos -g=true
-`, os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+
+  # Display the version information
+  %s version
+`, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
 }
 
 func printVersion() {
