@@ -14,11 +14,32 @@ import (
 )
 
 const (
+	version      = "1.0.0"
+	templVersion = "0.2.731"
+)
+
+const (
 	outputScriptDirPath  string = "temp"
 	outputScriptFileName string = "templ_static_generate_script.go"
 )
 
 func main() {
+	versionCmd := flag.NewFlagSet("version", flag.ExitOnError)
+
+	if len(os.Args) < 2 {
+		usage()
+		return
+	}
+
+	switch os.Args[1] {
+	case "version", "--version":
+		versionCmd.Parse(os.Args[2:])
+		printVersion(version, templVersion)
+		return
+	default:
+		// Continue with existing flag parsing
+	}
+
 	var inputDir, outputDir string
 	var runFormat, runGenerate, debug bool
 
@@ -105,14 +126,17 @@ func main() {
 
 func usage() {
 	fmt.Fprintf(os.Stderr, `Usage of %s:
-%s [options]
+%s [flags] [subcommands]
 
-Options:
+Flags:
   -i  Specify input directory (default "web/pages").
   -o  Specify output directory (default "dist").
   -f  Run templ fmt.
   -g  Run templ generate.
   -d  Keep the generation script after completion for inspection and debugging.
+
+Subcommands:
+  version  Display the version information.
 
 Examples:
   # Specify input and output directories
@@ -120,11 +144,15 @@ Examples:
 
   # Specify input directory, run templ generate and output to default directory
   %s -i web/demos -g=true
-`, os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+
+  # Display the version information
+  %s version
+`, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
 }
 
-func getOutputScriptPath() string {
-	return fmt.Sprintf("%s/%s", outputScriptDirPath, outputScriptFileName)
+func printVersion(version, templVersion string) {
+	templModulePath := "github.com/a-h/templ"
+	fmt.Printf("Version: %s (built with %s@v%s)\n", version, templModulePath, templVersion)
 }
 
 func clearAndCreateDir(dir string) error {
@@ -157,4 +185,8 @@ func copyFilesIntoOutputDir(files []string, inputDir string, outputDir string) e
 		}
 	}
 	return nil
+}
+
+func getOutputScriptPath() string {
+	return fmt.Sprintf("%s/%s", outputScriptDirPath, outputScriptFileName)
 }
