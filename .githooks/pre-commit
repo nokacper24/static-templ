@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Read the current version from the .version file
+current_version=$(cat .version)
+
+# Split the version number into its components
+IFS='.' read -r -a version_parts <<< "$current_version"
+
+# Increment the patch version number
+version_parts[2]=$((version_parts[2] + 1))
+
+# Combine the version parts back into a version string
+new_version="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
+
+# Write the new version to the .version file
+echo "$new_version" > .version
+
+# Stage the updated .version file
+git add .version
