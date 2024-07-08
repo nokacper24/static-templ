@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Check if the .version file has been updated and needs to be committed
+if git diff --cached --name-only | grep -q '^\.version$'; then
+  git commit --amend --no-edit
+fi
