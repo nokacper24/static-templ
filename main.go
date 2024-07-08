@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/nokacper24/static-templ/internal/finder"
@@ -203,5 +204,5 @@ func copyFilesIntoOutputDir(files []string, inputDir string, outputDir string) e
 }
 
 func getOutputScriptPath() string {
-	return fmt.Sprintf("%s/%s", outputScriptDirPath, outputScriptFileName)
+	return filepath.Join(outputScriptDirPath, outputScriptFileName)
 }
