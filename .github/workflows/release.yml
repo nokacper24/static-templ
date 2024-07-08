@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get last released tag
+        id: last_released_tag
+        run: |
+          tags=$(git tag --sort=-creatordate)
+          last_tag=$(echo "$tags" | sed -n '2p')
+          echo "Last published tag is $last_tag"
+          echo "value=$last_tag" >> $GITHUB_OUTPUT
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Generate Changelog
+        id: generate_changelog
+        run: |
+          {
+            echo 'value<<EOF'
+            npx --yes changelogen --no-output --from ${{ steps.last_released_tag.outputs.value}} | sed 's/\[log\]//g'
+            echo EOF
+          } >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Extract version message
+        id: extract_version
+        run: echo "version=$(cat .version)" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.extract_version.outputs.version }}
+          name: 'v${{ steps.extract_version.outputs.version }}'
+          draft: false
+          prerelease: false
+          make_latest: 'true'
+          token: ${{ secrets.GH_TOKEN }}
+          body: ${{ steps.generate_changelog.outputs.value }}
+          generate_release_notes: true
