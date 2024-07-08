@@ -71,7 +71,7 @@ We use Git hooks to automate versioning and ensure code quality. After cloning t
     **For Unix-based systems (Linux, macOS):**
 
     ```bash
-      ./setup-hooks.sh
+    ./setup-hooks.sh
     ```
 
     **For Windows systems:**
