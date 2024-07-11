@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"fmt"
 	"log"
@@ -14,10 +15,10 @@ import (
 	"github.com/nokacper24/static-templ/internal/generator"
 )
 
-const (
-	version      = "1.0.0"
-	templVersion = "0.2.731"
-)
+//go:embed .version
+var versionFile embed.FS
+
+const templVersion = "0.2.731"
 
 const (
 	outputScriptDirPath  string = "temp"
@@ -35,7 +36,7 @@ func main() {
 	switch os.Args[1] {
 	case "version", "--version":
 		versionCmd.Parse(os.Args[2:])
-		printVersion(version, templVersion)
+		printVersion(getVersion(), templVersion)
 		return
 	default:
 		// Continue with existing flag parsing
@@ -167,6 +168,14 @@ Examples:
 `, os.Args[0])
 
 	fmt.Println(output)
+}
+
+func getVersion() string {
+	content, err := versionFile.ReadFile(".version")
+	if err != nil {
+		return "unknown"
+	}
+	return strings.TrimSpace(string(content))
 }
 
 func printVersion(version, templVersion string) {

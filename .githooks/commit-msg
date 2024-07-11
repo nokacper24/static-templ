@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Get the commit message file
+commit_msg_file=$1
+
+# Read the commit message from the file
+commit_message=$(cat "$commit_msg_file")
+
+# Check if the commit message matches the pattern "chore: release v<version>"
+if [[ "$commit_message" =~ ^chore:\ release\ v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+  # Extract the version from the commit message
+  new_version="${BASH_REMATCH[1]}"
+
+  # Write the new version to the .version file
+  echo "$new_version" > .version
+
+  echo ""
+  echo "Bump version to $new_version."
+  echo ""
+
+  # Stage the updated .version file
+  git add .version
+fi
