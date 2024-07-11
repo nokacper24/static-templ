@@ -140,9 +140,10 @@ func main() {
 	}
 }
 
+// Display usage information
 func usage() {
-	fmt.Fprintf(os.Stderr, `Usage of %s:
-%s [flags] [subcommands]
+	output := fmt.Sprintf(`Usage of %[1]v:
+%[1]v [flags] [subcommands]
 
 Flags:
   -i  Specify input directory (default "web/pages").
@@ -156,14 +157,16 @@ Subcommands:
 
 Examples:
   # Specify input and output directories
-  %s -i web/demos -o output
+  %[1]v -i web/demos -o output
 
   # Specify input directory, run templ generate and output to default directory
-  %s -i web/demos -g=true
+  %[1]v -i web/demos -g=true
 
   # Display the version information
-  %s version
-`, os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+  %[1]v version
+`, os.Args[0])
+
+	fmt.Println(output)
 }
 
 func printVersion(version, templVersion string) {
