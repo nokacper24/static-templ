@@ -15,19 +15,30 @@ import (
 	"github.com/nokacper24/static-templ/internal/generator"
 )
 
+// Embed the version file
+//
 //go:embed .version
 var versionFile embed.FS
 
-const templVersion = "0.2.731"
-
+// Constants for templ version and script paths
 const (
-	outputScriptDirPath  string = "temp"
-	outputScriptFileName string = "templ_static_generate_script.go"
+	templVersion         = "0.2.731"
+	outputScriptDirPath  = "temp"
+	outputScriptFileName = "templ_static_generate_script.go"
 )
 
-func main() {
-	versionCmd := flag.NewFlagSet("version", flag.ExitOnError)
+// Struct to hold command line flags
+type flags struct {
+	InputDir    string
+	OutputDir   string
+	Mode        string
+	RunFormat   bool
+	RunGenerate bool
+	Debug       bool
+}
 
+// Handle subcommands
+func main() {
 	if len(os.Args) < 2 {
 		usage()
 		return
@@ -35,113 +46,157 @@ func main() {
 
 	switch os.Args[1] {
 	case "version", "--version":
-		versionCmd.Parse(os.Args[2:])
-		printVersion(getVersion(), templVersion)
+		handleVersionCmd()
 		return
 	default:
 		// Continue with existing flag parsing
 	}
 
-	var inputDir, outputDir string
-	var runFormat, runGenerate, debug bool
+	// Parse command line flags
+	flags := parseFlags()
 
-	flag.StringVar(&inputDir, "i", "web/pages", "Specify input directory.")
-	flag.StringVar(&outputDir, "o", "dist", "Specify output directory.")
-	flag.BoolVar(&runFormat, "f", false, "Run templ fmt.")
-	flag.BoolVar(&runGenerate, "g", false, "Run templ generate.")
-	flag.BoolVar(&debug, "d", false, "Keep the generation script after completion for inspection and debugging.")
-	flag.Usage = usage
-	flag.Parse()
-
-	inputDir = strings.TrimRight(inputDir, "/")
-	outputDir = strings.TrimRight(outputDir, "/")
-
-	if outputDir != inputDir {
-		if err := clearAndCreateDir(outputDir); err != nil {
+	// Prepare output directory if necessary
+	if flags.OutputDir != flags.InputDir {
+		if err := clearAndCreateDir(flags.OutputDir); err != nil {
 			log.Fatal("Error preparing output directory:", err)
 		}
 	}
 
+	// Prepare directories and find files
+	modulePath, groupedFiles := prepareDirectories(flags.InputDir)
+
+	// Run templ fmt if specified
+	if flags.RunFormat {
+		runTemplFmt(groupedFiles)
+	}
+
+	// Run templ generate if specified
+	if flags.RunGenerate {
+		groupedFiles = runTemplGenerate(flags.InputDir)
+	}
+
+	// Find functions to call in the generated Go files
+	funcs := findFunctions(groupedFiles.TemplGoFiles)
+
+	// Create output script directory
+	if err := os.MkdirAll(outputScriptDirPath, os.ModePerm); err != nil {
+		log.Fatalf("Error creating temp dir: %v", err)
+	}
+
+	if err := copyFilesIntoOutputDir(groupedFiles.OtherFiles, flags.InputDir, flags.OutputDir); err != nil {
+		log.Fatalf("Error copying files: %v", err)
+	}
+
+	if err := generator.Generate(getOutputScriptPath(), finder.FindImports(funcs, modulePath), funcs, flags.InputDir, flags.OutputDir); err != nil {
+		log.Fatalf("Error generating script when mode=pages: %v", err)
+	}
+
+	runGeneratedScript(flags.Debug)
+}
+
+// Handle the version command to display the version information
+func handleVersionCmd() {
+	versionCmd := flag.NewFlagSet("version", flag.ExitOnError)
+	err := versionCmd.Parse(os.Args[2:])
+	if err != nil {
+		return
+	}
+	printVersion(getVersion(), templVersion)
+}
+
+// Parse command line flags and return a flags struct
+func parseFlags() flags {
+	var flags flags
+
+	flag.StringVar(&flags.InputDir, "i", "web/pages", "Specify input directory.")
+	flag.StringVar(&flags.OutputDir, "o", "dist", "Specify output directory.")
+	flag.BoolVar(&flags.RunFormat, "f", false, "Run templ fmt.")
+	flag.BoolVar(&flags.RunGenerate, "g", false, "Run templ generate.")
+	flag.BoolVar(&flags.Debug, "d", false, "Keep the generation script after completion for inspection and debugging.")
+	flag.Usage = usage
+	flag.Parse()
+
+	flags.InputDir = strings.TrimRight(flags.InputDir, "/")
+	flags.OutputDir = strings.TrimRight(flags.OutputDir, "/")
+
+	return flags
+}
+
+// Prepare directories and find files
+func prepareDirectories(inputDir string) (string, *finder.GroupedFiles) {
 	modulePath, err := finder.FindModulePath()
 	if err != nil {
-		log.Fatal("Error finding module name:", err)
+		log.Fatalf("Error finding module name: %v", err)
 	}
 
 	groupedFiles, err := finder.FindFilesInDir(inputDir)
 	if err != nil {
-		log.Fatal("Error finding files:", err)
+		log.Fatalf("Error finding files: %v", err)
 	}
 
-	if runFormat {
-		done := make(chan struct{})
-		go func() {
-			err := generator.RunTemplFmt(groupedFiles.TemplFiles, done)
-			if err != nil {
-				log.Fatalf("failed to run 'templ fmt' command: %v", err)
-			}
-		}()
-		<-done
-		log.Println("completed running 'templ fmt'")
-	}
+	return modulePath, groupedFiles
+}
 
-	if runGenerate {
-		done := make(chan struct{})
-		go func() {
-			err := generator.RunTemplGenerate(done)
-			if err != nil {
-				log.Fatalf("failed to run 'templ generate' command: %v", err)
-			}
-		}()
-		<-done
-		log.Println("completed running 'templ generate'")
-		// run groupedFiles again after templ generate command execution to get TemplGoFiles updated
-		groupedFiles, err = finder.FindFilesInDir(inputDir)
+// Run templ fmt command
+func runTemplFmt(groupedFiles *finder.GroupedFiles) {
+	done := make(chan struct{})
+	go func() {
+		err := generator.RunTemplFmt(groupedFiles.TemplFiles, done)
 		if err != nil {
-			log.Fatal("Error finding _templ.go files after templ generate completion:", err)
+			log.Fatalf("Failed to run 'templ fmt' command: %v", err)
 		}
-	}
+	}()
+	<-done
+	log.Println("Completed running 'templ fmt'")
+}
 
-	funcs, err := finder.FindFunctionsInFiles(groupedFiles.TemplGoFiles)
+// Run templ generate command
+func runTemplGenerate(inputDir string) *finder.GroupedFiles {
+	done := make(chan struct{})
+	go func() {
+		err := generator.RunTemplGenerate(done)
+		if err != nil {
+			log.Fatalf("Failed to run 'templ generate' command: %v", err)
+		}
+	}()
+	<-done
+	log.Println("Completed running 'templ generate'")
+
+	groupedFiles, err := finder.FindFilesInDir(inputDir)
 	if err != nil {
-		log.Fatal("Error finding funcs:", err)
+		log.Fatal("Error finding _templ.go files after templ generate completion:", err)
+	}
+	return groupedFiles
+}
+
+// Find functions in the templ Go files
+func findFunctions(templGoFiles []string) []finder.FunctionToCall {
+	funcs, err := finder.FindFunctionsInFiles(templGoFiles)
+	if err != nil {
+		log.Fatalf("Error finding functions: %v", err)
 	} else if len(funcs) < 1 {
-		log.Fatalf(`No components found in "%s"`, inputDir)
+		log.Fatalf(`No components found`)
 	}
+	return funcs
+}
 
-	if err = os.MkdirAll(outputScriptDirPath, os.ModePerm); err != nil {
-		log.Fatal("err creating temp dir:", err)
-	}
-
-	if err = copyFilesIntoOutputDir(groupedFiles.OtherFiles, inputDir, outputDir); err != nil {
-		log.Fatal("err copying files:", err)
-	}
-
-	if err = generator.Generate(
-		getOutputScriptPath(),
-		finder.FindImports(funcs, modulePath),
-		funcs,
-		inputDir,
-		outputDir,
-	); err != nil {
-		log.Fatal("err generating script", err)
-	}
-
+// Run the generated script
+func runGeneratedScript(debug bool) {
 	cmd := exec.Command("go", "run", getOutputScriptPath())
-	if err = cmd.Start(); err != nil {
-		log.Fatal("err starting script", err)
+	if err := cmd.Start(); err != nil {
+		log.Fatalf("Error starting script: %v", err)
 	}
-	if err = cmd.Wait(); err != nil {
-		log.Fatal("err running script", err)
+	if err := cmd.Wait(); err != nil {
+		log.Fatalf("Error running script: %v", err)
 	}
 
 	if !debug {
-		if err = os.RemoveAll(outputScriptDirPath); err != nil {
-			log.Fatal("err removing script folder", err)
+		if err := os.RemoveAll(outputScriptDirPath); err != nil {
+			log.Fatalf("Error removing script folder: %v", err)
 		}
 	}
 }
 
-// Display usage information
 func usage() {
 	output := fmt.Sprintf(`Usage of %[1]v:
 %[1]v [flags] [subcommands]
@@ -170,19 +225,22 @@ Examples:
 	fmt.Println(output)
 }
 
+// Get the version from the embedded version file
 func getVersion() string {
 	content, err := versionFile.ReadFile(".version")
 	if err != nil {
-		return "unknown"
+		log.Fatalf("Error reading version file: %v", err)
 	}
 	return strings.TrimSpace(string(content))
 }
 
+// Print the version information
 func printVersion(version, templVersion string) {
 	templModulePath := "github.com/a-h/templ"
 	fmt.Printf("Version: %s (built with %s@v%s)\n", version, templModulePath, templVersion)
 }
 
+// Clear and create the specified directory
 func clearAndCreateDir(dir string) error {
 	if err := os.RemoveAll(dir); err != nil {
 		return err
@@ -190,6 +248,7 @@ func clearAndCreateDir(dir string) error {
 	return os.MkdirAll(dir, os.ModePerm)
 }
 
+// Copy a file from one path to another
 func copyFile(fromPath string, toPath string) error {
 	if err := os.MkdirAll(path.Dir(toPath), os.ModePerm); err != nil {
 		return err
@@ -206,6 +265,7 @@ func copyFile(fromPath string, toPath string) error {
 	return nil
 }
 
+// Copy all files from the input directory to the output directory
 func copyFilesIntoOutputDir(files []string, inputDir string, outputDir string) error {
 	for _, f := range files {
 		if err := copyFile(f, strings.Replace(f, inputDir, outputDir, 1)); err != nil {
@@ -215,6 +275,7 @@ func copyFilesIntoOutputDir(files []string, inputDir string, outputDir string) e
 	return nil
 }
 
+// Get the output script path
 func getOutputScriptPath() string {
 	return filepath.Join(outputScriptDirPath, outputScriptFileName)
 }

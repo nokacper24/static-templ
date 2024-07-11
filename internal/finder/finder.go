@@ -58,7 +58,7 @@ func findAllFiles(root string) (filePaths, error) {
 	return paths, nil
 }
 
-// Goes throught the file paths provided and finds all exported fucntrions that take 0 parameters.
+// Goes through the file paths provided and finds all exported fucntrions that take 0 parameters.
 // Files provided must be valid Go source files.
 func FindFunctionsInFiles(files filePaths) ([]FunctionToCall, error) {
 	var funcs []FunctionToCall
@@ -128,7 +128,7 @@ func (f *FunctionToCall) HtmlFileName() string {
 	return fmt.Sprintf("%s.html", slugified)
 }
 
-type groupedFiles struct {
+type GroupedFiles struct {
 	TemplGoFiles filePaths // "_templ.go" files
 	TemplFiles   filePaths // ".templ" files
 	GoFiles      filePaths // ".go" files, excluding "_templ.go"
@@ -136,8 +136,8 @@ type groupedFiles struct {
 }
 
 // Groups files provided into TemplGoFiles ("_templ.go"), TemplFiles (".templ"), GoFiles (other ".go" files) and OtherFiles.
-func (f *filePaths) toGroupedFiles() *groupedFiles {
-	var gf groupedFiles
+func (f *filePaths) toGroupedFiles() *GroupedFiles {
+	var gf GroupedFiles
 	for _, fp := range *f {
 		if fp[len(fp)-9:] == "_templ.go" {
 			gf.TemplGoFiles = append(gf.TemplGoFiles, fp)
@@ -155,7 +155,7 @@ func (f *filePaths) toGroupedFiles() *groupedFiles {
 // Finds paths to all files in the given directory and all its subdirecotries.
 //
 // Groups the files into groupedFiles type, includes TemplGoFiles ("_templ.go"), TemplFiles (".templ"), GoFiles (other ".go" files) and OtherFiles.
-func FindFilesInDir(root string) (*groupedFiles, error) {
+func FindFilesInDir(root string) (*GroupedFiles, error) {
 	allFiles, err := findAllFiles(root)
 	if err != nil {
 		return nil, err
