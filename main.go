@@ -27,6 +27,12 @@ const (
 	outputScriptFileName = "templ_static_generate_script.go"
 )
 
+// Constants for operational modes
+const (
+	modeBundle = "bundle"
+	modeInline = "inline"
+)
+
 // Struct to hold command line flags
 type flags struct {
 	InputDir    string
@@ -37,13 +43,13 @@ type flags struct {
 	Debug       bool
 }
 
-// Handle subcommands
 func main() {
 	if len(os.Args) < 2 {
 		usage()
 		return
 	}
 
+	// Handle subcommands
 	switch os.Args[1] {
 	case "version", "--version":
 		handleVersionCmd()
@@ -56,42 +62,27 @@ func main() {
 	flags := parseFlags()
 
 	// Prepare output directory if necessary
-	if flags.OutputDir != flags.InputDir {
-		if err := clearAndCreateDir(flags.OutputDir); err != nil {
-			log.Fatal("Error preparing output directory:", err)
-		}
+	if flags.Mode == modeBundle && flags.OutputDir != flags.InputDir {
+		prepareOutputDirectory(flags.OutputDir)
 	}
 
 	// Prepare directories and find files
 	modulePath, groupedFiles := prepareDirectories(flags.InputDir)
 
 	// Run templ fmt if specified
-	if flags.RunFormat {
-		runTemplFmt(groupedFiles)
-	}
+	runTemplFmtIfNeeded(flags.RunFormat, groupedFiles)
 
 	// Run templ generate if specified
-	if flags.RunGenerate {
-		groupedFiles = runTemplGenerate(flags.InputDir)
-	}
+	groupedFiles = runTemplGenerateIfNeeded(flags.RunGenerate, flags.InputDir)
 
 	// Find functions to call in the generated Go files
 	funcs := findFunctions(groupedFiles.TemplGoFiles)
 
 	// Create output script directory
-	if err := os.MkdirAll(outputScriptDirPath, os.ModePerm); err != nil {
-		log.Fatalf("Error creating temp dir: %v", err)
-	}
+	createOutputScriptDir()
 
-	if err := copyFilesIntoOutputDir(groupedFiles.OtherFiles, flags.InputDir, flags.OutputDir); err != nil {
-		log.Fatalf("Error copying files: %v", err)
-	}
-
-	if err := generator.Generate(getOutputScriptPath(), finder.FindImports(funcs, modulePath), funcs, flags.InputDir, flags.OutputDir); err != nil {
-		log.Fatalf("Error generating script when mode=pages: %v", err)
-	}
-
-	runGeneratedScript(flags.Debug)
+	// Handle modes
+	handleMode(flags.Mode, funcs, modulePath, flags.InputDir, flags.OutputDir, groupedFiles.OtherFiles, flags.Debug)
 }
 
 // Handle the version command to display the version information
@@ -108,6 +99,7 @@ func handleVersionCmd() {
 func parseFlags() flags {
 	var flags flags
 
+	flag.StringVar(&flags.Mode, "m", "bundle", "Set the operational mode: bundle or inline.")
 	flag.StringVar(&flags.InputDir, "i", "web/pages", "Specify input directory.")
 	flag.StringVar(&flags.OutputDir, "o", "dist", "Specify output directory.")
 	flag.BoolVar(&flags.RunFormat, "f", false, "Run templ fmt.")
@@ -137,6 +129,13 @@ func prepareDirectories(inputDir string) (string, *finder.GroupedFiles) {
 	return modulePath, groupedFiles
 }
 
+// Run templ fmt command if needed
+func runTemplFmtIfNeeded(runFormat bool, groupedFiles *finder.GroupedFiles) {
+	if runFormat {
+		runTemplFmt(groupedFiles)
+	}
+}
+
 // Run templ fmt command
 func runTemplFmt(groupedFiles *finder.GroupedFiles) {
 	done := make(chan struct{})
@@ -148,6 +147,14 @@ func runTemplFmt(groupedFiles *finder.GroupedFiles) {
 	}()
 	<-done
 	log.Println("Completed running 'templ fmt'")
+}
+
+// Run templ generate command if needed
+func runTemplGenerateIfNeeded(runGenerate bool, inputDir string) *finder.GroupedFiles {
+	if runGenerate {
+		return runTemplGenerate(inputDir)
+	}
+	return nil
 }
 
 // Run templ generate command
@@ -180,6 +187,49 @@ func findFunctions(templGoFiles []string) []finder.FunctionToCall {
 	return funcs
 }
 
+// Create output script directory
+func createOutputScriptDir() {
+	if err := os.MkdirAll(outputScriptDirPath, os.ModePerm); err != nil {
+		log.Fatalf("Error creating temp dir: %v", err)
+	}
+}
+
+// Handle operational mode
+func handleMode(mode string, funcs []finder.FunctionToCall, modulePath, inputDir, outputDir string, otherFiles []string, debug bool) {
+	switch mode {
+	case modeBundle:
+		log.Println("Operational mode: bundle")
+		handlePagesMode(funcs, modulePath, inputDir, outputDir, otherFiles, debug)
+	case modeInline:
+		log.Println("Operational mode: inline")
+		handleComponentsMode(funcs, modulePath, inputDir, debug)
+	default:
+		log.Fatalf("Unknown mode: %s", mode)
+	}
+}
+
+// Handle bundle mode
+func handlePagesMode(funcs []finder.FunctionToCall, modulePath, inputDir, outputDir string, otherFiles []string, debug bool) {
+	if err := copyFilesIntoOutputDir(otherFiles, inputDir, outputDir); err != nil {
+		log.Fatalf("Error copying files: %v", err)
+	}
+
+	if err := generator.GenerateForBundleMode(getOutputScriptPath(), finder.FindImports(funcs, modulePath), funcs, inputDir, outputDir); err != nil {
+		log.Fatalf("Error generating script when mode=pages: %v", err)
+	}
+
+	runGeneratedScript(debug)
+}
+
+// Handle inline mode
+func handleComponentsMode(funcs []finder.FunctionToCall, modulePath, inputDir string, debug bool) {
+	if err := generator.GenerateForInlineMode(getOutputScriptPath(), finder.FindImports(funcs, modulePath), funcs, inputDir); err != nil {
+		log.Fatalf("Error generating script when mode=components: %v", err)
+	}
+
+	runGeneratedScript(debug)
+}
+
 // Run the generated script
 func runGeneratedScript(debug bool) {
 	cmd := exec.Command("go", "run", getOutputScriptPath())
@@ -197,11 +247,13 @@ func runGeneratedScript(debug bool) {
 	}
 }
 
+// Display usage information
 func usage() {
 	output := fmt.Sprintf(`Usage of %[1]v:
 %[1]v [flags] [subcommands]
 
 Flags:
+  -m  Set the operational mode: bundle or inline. (default "bundle").
   -i  Specify input directory (default "web/pages").
   -o  Specify output directory (default "dist").
   -f  Run templ fmt.
@@ -246,6 +298,13 @@ func clearAndCreateDir(dir string) error {
 		return err
 	}
 	return os.MkdirAll(dir, os.ModePerm)
+}
+
+// Prepare output directory by clearing and creating it
+func prepareOutputDirectory(outputDir string) {
+	if err := clearAndCreateDir(outputDir); err != nil {
+		log.Fatal("Error preparing output directory:", err)
+	}
 }
 
 // Copy a file from one path to another
