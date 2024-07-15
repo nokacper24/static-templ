@@ -15,6 +15,7 @@ Usage of static-templ:
 static-templ [flags] [subcommands]
 
 Flags:
+  -m  Set the operational mode: bundle or inline. (default "bundle").
   -i  Specify input directory (default "web/pages").
   -o  Specify output directory (default "dist").
   -f  Run templ fmt.
@@ -35,13 +36,18 @@ Examples:
   static-templ version
 ```
 
+### Modes
+
+The `-m` flag helps addressing two specific use-cases supported by `static-templ`:
+
+- **Bundle Mode** (`bundle`): Generates HTML files in the specified output directory, mirroring the structure of the input directory. This mode is useful for converting a full set of pages. It reflects the original `static-templ` way of working.
+- **Inline Mode** (`inline`): Generates HTML files in the same directory as their corresponding `.templ` files. This mode is useful for smaller projects, single-component development or for documenting components.
+
 ## Assumptions
 
 Templ components that will be turned into html files must be **exported**, and take **no arguments**. If these conditions are not met, the component will be ignored. Your components must be in the *input* directory, their path will be mirrored in the *output* directory.
 
-All files other than `.go` and `.templ` files will be copied to the output directory, preserving the directory structure. This allows you to include any assets and reference them using relative paths.
-
-## Example project
+By default (`mode=bundle`) all files other than `.go` and `.templ` files will be copied to the output directory, preserving the directory structure. This allows you to include any assets and reference them using relative paths.
 
 ## Background
 
@@ -57,7 +63,7 @@ Before submitting a pull request, please follow these steps to ensure a smooth a
 
 ### Setting Up Git Hooks
 
-We use Git hooks to automate versioning and ensure code quality. After cloning the repository, you must set up the Git hooks by running the following script. This step ensures that the hooks are properly installed and executed on every commit.
+We use Git hooks to automate versioning and ensure code quality. After cloning the repository, you must set up the Git hooks by running the following script. This step ensures that the hooks are properly installed and executed when needed.
 
 1. Clone the repository:
 

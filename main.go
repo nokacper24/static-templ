@@ -22,9 +22,15 @@ var versionFile embed.FS
 
 // Constants for templ version and script paths
 const (
-	templVersion         = "0.2.731"
+	templVersion         = "0.2.747"
 	outputScriptDirPath  = "temp"
 	outputScriptFileName = "templ_static_generate_script.go"
+)
+
+// Constants for operational modes
+const (
+	modeBundle = "bundle"
+	modeInline = "inline"
 )
 
 // Struct to hold command line flags
@@ -37,26 +43,23 @@ type flags struct {
 	Debug       bool
 }
 
-// Handle subcommands
 func main() {
-	if len(os.Args) < 2 {
-		usage()
-		return
-	}
-
-	switch os.Args[1] {
-	case "version", "--version":
-		handleVersionCmd()
-		return
-	default:
-		// Continue with existing flag parsing
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "version", "--version":
+			handleVersionCmd()
+			return
+		default:
+			log.Printf("Unknown subcommand '%s'. Continue with the defaults", os.Args[1])
+			// Continue with existing flag parsing
+		}
 	}
 
 	// Parse command line flags
 	flags := parseFlags()
 
 	// Prepare output directory if necessary
-	if flags.OutputDir != flags.InputDir {
+	if flags.Mode == modeBundle && flags.OutputDir != flags.InputDir {
 		if err := clearAndCreateDir(flags.OutputDir); err != nil {
 			log.Fatal("Error preparing output directory:", err)
 		}
@@ -87,11 +90,17 @@ func main() {
 		log.Fatalf("Error copying files: %v", err)
 	}
 
-	if err := generator.Generate(getOutputScriptPath(), finder.FindImports(funcs, modulePath), funcs, flags.InputDir, flags.OutputDir); err != nil {
-		log.Fatalf("Error generating script when mode=pages: %v", err)
+	// Handle modes
+	switch flags.Mode {
+	case modeBundle:
+		log.Println("Operational mode: bundle")
+		handleBundleMode(funcs, modulePath, flags.InputDir, flags.OutputDir, groupedFiles.OtherFiles, flags.Debug)
+	case modeInline:
+		log.Println("Operational mode: inline")
+		handleInlineMode(funcs, modulePath, flags.InputDir, flags.Debug)
+	default:
+		log.Fatalf("Unknown mode: %s", flags.Mode)
 	}
-
-	runGeneratedScript(flags.Debug)
 }
 
 // Handle the version command to display the version information
@@ -108,6 +117,7 @@ func handleVersionCmd() {
 func parseFlags() flags {
 	var flags flags
 
+	flag.StringVar(&flags.Mode, "m", "bundle", "Set the operational mode: bundle or inline.")
 	flag.StringVar(&flags.InputDir, "i", "web/pages", "Specify input directory.")
 	flag.StringVar(&flags.OutputDir, "o", "dist", "Specify output directory.")
 	flag.BoolVar(&flags.RunFormat, "f", false, "Run templ fmt.")
@@ -202,6 +212,7 @@ func usage() {
 %[1]v [flags] [subcommands]
 
 Flags:
+  -m  Set the operational mode: bundle or inline. (default "bundle").
   -i  Specify input directory (default "web/pages").
   -o  Specify output directory (default "dist").
   -f  Run templ fmt.
@@ -246,6 +257,24 @@ func clearAndCreateDir(dir string) error {
 		return err
 	}
 	return os.MkdirAll(dir, os.ModePerm)
+}
+
+func handleBundleMode(funcs []finder.FunctionToCall, modulePath, inputDir, outputDir string, otherFiles []string, debug bool) {
+	if err := copyFilesIntoOutputDir(otherFiles, inputDir, outputDir); err != nil {
+		log.Fatalf("Error copying files: %v", err)
+	}
+	if err := generator.GenerateForBundleMode(getOutputScriptPath(), finder.FindImports(funcs, modulePath), funcs, inputDir, outputDir); err != nil {
+		log.Fatalf("Error generating script when mode=pages: %v", err)
+	}
+	runGeneratedScript(debug)
+}
+
+// Handle components mode
+func handleInlineMode(funcs []finder.FunctionToCall, modulePath, inputDir string, debug bool) {
+	if err := generator.GenerateForInlineMode(getOutputScriptPath(), finder.FindImports(funcs, modulePath), funcs, inputDir); err != nil {
+		log.Fatalf("Error generating script when mode=components: %v", err)
+	}
+	runGeneratedScript(debug)
 }
 
 // Copy a file from one path to another

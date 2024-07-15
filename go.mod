@@ -3,9 +3,9 @@ module github.com/nokacper24/static-templ
 go 1.22.0
 
 require (
-	github.com/a-h/templ v0.2.731
+	github.com/a-h/templ v0.2.747
 	github.com/gobeam/stringy v0.0.7
-	golang.org/x/mod v0.18.0
+	golang.org/x/mod v0.19.0
 )
 
 require (
@@ -22,6 +22,6 @@ require (
 	github.com/natefinch/atomic v1.0.1 // indirect
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
 )
