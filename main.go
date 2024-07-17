@@ -50,7 +50,6 @@ func main() {
 			handleVersionCmd()
 			return
 		default:
-			log.Printf("Unknown subcommand '%s'. Continue with the defaults", os.Args[1])
 			// Continue with existing flag parsing
 		}
 	}
