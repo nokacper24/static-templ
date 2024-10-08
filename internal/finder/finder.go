@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gobeam/stringy"
 	"golang.org/x/mod/modfile"
@@ -171,7 +172,9 @@ func FindImports(funcs []FunctionToCall, modulePath string) []string {
 	}
 	var importsSlice []string
 	for imp := range importsMap {
-		importsSlice = append(importsSlice, fmt.Sprintf("%s/%s", modulePath, imp))
+		normalizedGoImportPath := strings.ReplaceAll(imp, "\\", "/")
+		importStr := fmt.Sprintf("%s/%s", modulePath, normalizedGoImportPath)
+		importsSlice = append(importsSlice, importStr)
 	}
 	return importsSlice
 }
