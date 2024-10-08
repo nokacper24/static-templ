@@ -85,10 +85,6 @@ func main() {
 		log.Fatalf("Error creating temp dir: %v", err)
 	}
 
-	if err := copyFilesIntoOutputDir(groupedFiles.OtherFiles, flags.InputDir, flags.OutputDir); err != nil {
-		log.Fatalf("Error copying files: %v", err)
-	}
-
 	// Handle modes
 	switch flags.Mode {
 	case modeBundle:
