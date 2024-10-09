@@ -115,7 +115,7 @@ func getFileNameWithoutExt(path string) string {
 //
 // Based on the original file name if component is the only one declared in the given file. Otherwise the function name is used.
 //
-// The filename is slugifdied, e.g. "HelloWorld" -> "hello-world.html"
+// The filename is slugified, e.g. "HelloWorld" -> "hello-world.html"
 func (f *FunctionToCall) HtmlFileName() string {
 	var filename string
 	if f.IsAlone {

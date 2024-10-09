@@ -157,9 +157,9 @@ func generateFiles(outputScriptPath, templateName, scriptTemplate string, import
 // Constructs a new filepath, mirroring the original location.
 // Replaces the old dir prefix (input directory path) with new prefix (output directory path),
 // and adds the filename at the end.
-func newFilePath(opriginalDirPath string, oldPrefix string, newPrefix string, filename string) string {
+func newFilePath(originalDirPath string, oldPrefix string, newPrefix string, filename string) string {
 	return fmt.Sprint(
-		strings.Replace(opriginalDirPath, oldPrefix, newPrefix, 1),
+		strings.Replace(originalDirPath, oldPrefix, newPrefix, 1),
 		"/",
 		filename)
 }
