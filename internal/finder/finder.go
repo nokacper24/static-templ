@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gobeam/stringy"
 	"golang.org/x/mod/modfile"
@@ -114,7 +115,7 @@ func getFileNameWithoutExt(path string) string {
 //
 // Based on the original file name if component is the only one declared in the given file. Otherwise the function name is used.
 //
-// The filename is slugifdied, e.g. "HelloWorld" -> "hello-world.html"
+// The filename is slugified, e.g. "HelloWorld" -> "hello-world.html"
 func (f *FunctionToCall) HtmlFileName() string {
 	var filename string
 	if f.IsAlone {
@@ -171,7 +172,9 @@ func FindImports(funcs []FunctionToCall, modulePath string) []string {
 	}
 	var importsSlice []string
 	for imp := range importsMap {
-		importsSlice = append(importsSlice, fmt.Sprintf("%s/%s", modulePath, imp))
+		normalizedGoImportPath := strings.ReplaceAll(imp, "\\", "/")
+		importStr := fmt.Sprintf("%s/%s", modulePath, normalizedGoImportPath)
+		importsSlice = append(importsSlice, importStr)
 	}
 	return importsSlice
 }

@@ -22,7 +22,7 @@ var versionFile embed.FS
 
 // Constants for templ version and script paths
 const (
-	templVersion         = "0.2.747"
+	templVersion         = "0.2.778"
 	outputScriptDirPath  = "temp"
 	outputScriptFileName = "templ_static_generate_script.go"
 )
@@ -83,10 +83,6 @@ func main() {
 	// Create output script directory
 	if err := os.MkdirAll(outputScriptDirPath, os.ModePerm); err != nil {
 		log.Fatalf("Error creating temp dir: %v", err)
-	}
-
-	if err := copyFilesIntoOutputDir(groupedFiles.OtherFiles, flags.InputDir, flags.OutputDir); err != nil {
-		log.Fatalf("Error copying files: %v", err)
 	}
 
 	// Handle modes

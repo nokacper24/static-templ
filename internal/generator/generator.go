@@ -84,7 +84,8 @@ var logger = slog.New(sloghandler.NewHandler(os.Stderr, nil))
 // GenerateForBundleMode creates an output script when mode=bundle, transforming templ files to HTML.
 func GenerateForBundleMode(outputScriptPath string, imports []string, funcs []finder.FunctionToCall, inputDir string, outputDir string) error {
 	pathFunc := func(f finder.FunctionToCall) string {
-		return newFilePath(filepath.Dir(f.FilePath), inputDir, outputDir, f.HtmlFileName())
+		normalizedPath := strings.ReplaceAll(filepath.Dir(f.FilePath), "\\", "/")
+		return newFilePath(normalizedPath, inputDir, outputDir, f.HtmlFileName())
 	}
 	return generateFiles(outputScriptPath, "outputPages", outputScript, imports, funcs, pathFunc)
 }
@@ -92,7 +93,8 @@ func GenerateForBundleMode(outputScriptPath string, imports []string, funcs []fi
 // GenerateForInlineMode creates an output script when mode=inline, transforming templ files to HTML in their respective directories.
 func GenerateForInlineMode(outputScriptPath string, imports []string, funcs []finder.FunctionToCall, outputPath string) error {
 	pathFunc := func(f finder.FunctionToCall) string {
-		return filepath.Join(filepath.Dir(f.FilePath), f.HtmlFileName())
+		normalizedPath := strings.ReplaceAll(filepath.Dir(f.FilePath), "\\", "/")
+		return strings.Join([]string{normalizedPath, f.HtmlFileName()}, "/")
 	}
 	return generateFiles(outputScriptPath, "outputComponents", outputScript, imports, funcs, pathFunc)
 }
@@ -155,9 +157,9 @@ func generateFiles(outputScriptPath, templateName, scriptTemplate string, import
 // Constructs a new filepath, mirroring the original location.
 // Replaces the old dir prefix (input directory path) with new prefix (output directory path),
 // and adds the filename at the end.
-func newFilePath(opriginalDirPath string, oldPrefix string, newPrefix string, filename string) string {
+func newFilePath(originalDirPath string, oldPrefix string, newPrefix string, filename string) string {
 	return fmt.Sprint(
-		strings.Replace(opriginalDirPath, oldPrefix, newPrefix, 1),
+		strings.Replace(originalDirPath, oldPrefix, newPrefix, 1),
 		"/",
 		filename)
 }
