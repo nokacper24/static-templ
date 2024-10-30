@@ -3,7 +3,7 @@ module github.com/nokacper24/static-templ
 go 1.22
 
 require (
-	github.com/a-h/templ v0.2.778
+	github.com/a-h/templ v0.2.793
 	github.com/gobeam/stringy v0.0.7
 	golang.org/x/mod v0.20.0
 )
