@@ -22,7 +22,7 @@ var versionFile embed.FS
 
 // Constants for templ version and script paths
 const (
-	templVersion         = "0.3.833"
+	templVersion         = "0.3.857"
 	outputScriptDirPath  = "temp"
 	outputScriptFileName = "templ_static_generate_script.go"
 )
