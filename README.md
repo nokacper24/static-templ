@@ -1,5 +1,11 @@
 # Static Templ
 
+[![release](https://github.com/nokacper24/static-templ/actions/workflows/release.yml/badge.svg)](https://github.com/nokacper24/static-templ/actions/workflows/release.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nokacper24/static-templ)](https://goreportcard.com/report/github.com/nokacper24/static-templ)
+[![Version](https://badge.fury.io/gh/nokacper24%2Fstatic-templ.svg)](https://badge.fury.io/gh/nokacper24%2Fstatic-templ)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nokacper24/static-templ/.svg)](https://pkg.go.dev/github.com/nokacper24/static-templ/)
+[![License](https://img.shields.io/github/license/nokacper24/static-templ)](https://github.com/nokacper24/static-templ/blob/main/LICENSE)
+
 Build static HTML websites with file based routing, using [templ](https://github.com/a-h/templ)! All components are pre-rendered at build time, and the resulting HTML files can be served using any static file server.
 
 ## Installation
