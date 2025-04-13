@@ -87,3 +87,28 @@ We use Git hooks to automate versioning and ensure code quality. After cloning t
     ```
 
 By running the appropriate setup script, you ensure that the pre-commit hook is properly installed. This hook will automatically update the version number in the `.version` file and stage it for commit.
+
+### Creating a Release
+
+Follow these steps to create a new release:
+
+1. **Update the version**
+   - Edit the `.version` file and set the new version number.
+
+2. **Commit and push changes**
+   - Create an empty commit to indicate the release:
+
+     ```bash
+     git commit --allow-empty -m "chore: release vX.X.X"
+     git push origin main
+     ```
+
+3. **Tag the release and push it**
+   - Create and push a version tag:
+
+     ```bash
+     git tag vX.X.X
+     git push origin vX.X.X
+     ```
+
+Your release is now tagged and ready.
